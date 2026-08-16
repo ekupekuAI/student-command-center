@@ -1,0 +1,1 @@
+"""Student Command Center backend package."""

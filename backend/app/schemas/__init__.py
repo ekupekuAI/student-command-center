@@ -1,0 +1,1 @@
+"""Pydantic schemas (API layer). Database models are separate (app.models)."""

@@ -1,0 +1,219 @@
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN TOKENS — Student Command Center
+   Full light/dark theme system via CSS custom properties
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Light Theme (default) ─────────────────────────────────── */
+:root,
+[data-theme="light"] {
+  /* Brand / Accent */
+  --color-brand-50:   hsl(245, 100%, 97%);
+  --color-brand-100:  hsl(245, 96%, 93%);
+  --color-brand-200:  hsl(245, 93%, 87%);
+  --color-brand-300:  hsl(245, 87%, 77%);
+  --color-brand-400:  hsl(245, 82%, 67%);
+  --color-brand-500:  hsl(245, 78%, 58%);   /* primary */
+  --color-brand-600:  hsl(245, 72%, 50%);   /* hover   */
+  --color-brand-700:  hsl(245, 68%, 42%);
+  --color-brand-800:  hsl(245, 62%, 34%);
+  --color-brand-900:  hsl(245, 58%, 27%);
+
+  /* Neutral */
+  --color-neutral-0:   hsl(0, 0%, 100%);
+  --color-neutral-50:  hsl(220, 25%, 98%);
+  --color-neutral-100: hsl(220, 20%, 96%);
+  --color-neutral-200: hsl(220, 16%, 92%);
+  --color-neutral-300: hsl(220, 12%, 86%);
+  --color-neutral-400: hsl(220, 9%, 72%);
+  --color-neutral-500: hsl(220, 8%, 56%);
+  --color-neutral-600: hsl(220, 8%, 42%);
+  --color-neutral-700: hsl(220, 10%, 28%);
+  --color-neutral-800: hsl(220, 12%, 18%);
+  --color-neutral-900: hsl(220, 14%, 10%);
+
+  /* Semantic colors */
+  --color-success-bg:   hsl(152, 80%, 95%);
+  --color-success:      hsl(152, 65%, 38%);
+  --color-success-border: hsl(152, 50%, 80%);
+
+  --color-warning-bg:   hsl(38, 100%, 95%);
+  --color-warning:      hsl(30, 88%, 42%);
+  --color-warning-border: hsl(38, 90%, 78%);
+
+  --color-error-bg:     hsl(355, 100%, 97%);
+  --color-error:        hsl(355, 75%, 52%);
+  --color-error-border: hsl(355, 80%, 85%);
+
+  --color-info-bg:      hsl(205, 100%, 95%);
+  --color-info:         hsl(205, 82%, 42%);
+  --color-info-border:  hsl(205, 80%, 80%);
+
+  /* Surfaces */
+  --surface-page:       var(--color-neutral-50);
+  --surface-card:       var(--color-neutral-0);
+  --surface-elevated:   var(--color-neutral-0);
+  --surface-sunken:     var(--color-neutral-100);
+  --surface-overlay:    hsla(220, 20%, 10%, 0.45);
+
+  /* Borders */
+  --border-subtle:      var(--color-neutral-200);
+  --border-default:     var(--color-neutral-300);
+  --border-strong:      var(--color-neutral-400);
+
+  /* Text */
+  --text-primary:       var(--color-neutral-900);
+  --text-secondary:     var(--color-neutral-600);
+  --text-tertiary:      var(--color-neutral-500);
+  --text-disabled:      var(--color-neutral-400);
+  --text-inverse:       var(--color-neutral-0);
+  --text-brand:         var(--color-brand-600);
+  --text-on-brand:      #ffffff;
+
+  /* Shadows */
+  --shadow-xs:   0 1px 2px hsla(220, 20%, 14%, 0.06);
+  --shadow-sm:   0 1px 4px hsla(220, 20%, 14%, 0.08), 0 1px 2px hsla(220, 20%, 14%, 0.04);
+  --shadow-md:   0 4px 12px hsla(220, 20%, 14%, 0.10), 0 1px 4px hsla(220, 20%, 14%, 0.06);
+  --shadow-lg:   0 8px 28px hsla(220, 20%, 14%, 0.12), 0 2px 8px hsla(220, 20%, 14%, 0.06);
+  --shadow-xl:   0 20px 48px hsla(220, 20%, 14%, 0.16), 0 4px 16px hsla(220, 20%, 14%, 0.08);
+
+  /* Sidebar */
+  --sidebar-bg:       hsl(245, 55%, 18%);
+  --sidebar-surface:  hsla(245, 60%, 100%, 0.05);
+  --sidebar-border:   hsla(245, 60%, 100%, 0.08);
+  --sidebar-text:     hsla(245, 20%, 85%);
+  --sidebar-muted:    hsla(245, 20%, 62%);
+  --sidebar-active:   hsla(245, 90%, 68%, 0.18);
+  --sidebar-hover:    hsla(245, 90%, 80%, 0.08);
+  --sidebar-accent:   hsl(245, 80%, 70%);
+
+  /* Subject accent palette */
+  --subject-violet:  hsl(270, 70%, 58%);
+  --subject-blue:    hsl(215, 80%, 55%);
+  --subject-cyan:    hsl(185, 75%, 45%);
+  --subject-green:   hsl(152, 65%, 45%);
+  --subject-yellow:  hsl(42, 90%, 50%);
+  --subject-orange:  hsl(25, 88%, 55%);
+  --subject-red:     hsl(355, 78%, 58%);
+  --subject-pink:    hsl(328, 72%, 60%);
+}
+
+/* ── Dark Theme ────────────────────────────────────────────── */
+[data-theme="dark"] {
+  /* Surfaces */
+  --surface-page:       hsl(222, 30%, 9%);
+  --surface-card:       hsl(222, 28%, 13%);
+  --surface-elevated:   hsl(222, 26%, 16%);
+  --surface-sunken:     hsl(222, 30%, 7%);
+  --surface-overlay:    hsla(222, 30%, 5%, 0.65);
+
+  /* Borders */
+  --border-subtle:      hsl(222, 22%, 20%);
+  --border-default:     hsl(222, 20%, 24%);
+  --border-strong:      hsl(222, 18%, 32%);
+
+  /* Text */
+  --text-primary:       hsl(220, 20%, 94%);
+  --text-secondary:     hsl(220, 12%, 64%);
+  --text-tertiary:      hsl(220, 10%, 48%);
+  --text-disabled:      hsl(220, 8%, 36%);
+  --text-inverse:       hsl(220, 14%, 10%);
+  --text-brand:         var(--color-brand-400);
+
+  /* Shadows */
+  --shadow-xs:   0 1px 2px hsla(0, 0%, 0%, 0.25);
+  --shadow-sm:   0 1px 4px hsla(0, 0%, 0%, 0.30), 0 1px 2px hsla(0, 0%, 0%, 0.20);
+  --shadow-md:   0 4px 12px hsla(0, 0%, 0%, 0.35), 0 1px 4px hsla(0, 0%, 0%, 0.25);
+  --shadow-lg:   0 8px 28px hsla(0, 0%, 0%, 0.40), 0 2px 8px hsla(0, 0%, 0%, 0.28);
+  --shadow-xl:   0 20px 48px hsla(0, 0%, 0%, 0.50), 0 4px 16px hsla(0, 0%, 0%, 0.35);
+
+  /* Semantic overrides */
+  --color-success-bg:   hsla(152, 65%, 38%, 0.15);
+  --color-success:      hsl(152, 60%, 52%);
+  --color-success-border: hsla(152, 60%, 38%, 0.35);
+
+  --color-warning-bg:   hsla(38, 88%, 42%, 0.15);
+  --color-warning:      hsl(38, 88%, 62%);
+  --color-warning-border: hsla(38, 88%, 50%, 0.30);
+
+  --color-error-bg:     hsla(355, 75%, 52%, 0.15);
+  --color-error:        hsl(355, 78%, 68%);
+  --color-error-border: hsla(355, 75%, 55%, 0.30);
+
+  --color-info-bg:      hsla(205, 82%, 42%, 0.15);
+  --color-info:         hsl(205, 80%, 62%);
+  --color-info-border:  hsla(205, 80%, 45%, 0.30);
+
+  /* Sidebar stays dark even in dark mode */
+  --sidebar-bg:       hsl(222, 36%, 7%);
+  --sidebar-surface:  hsla(245, 60%, 100%, 0.04);
+  --sidebar-border:   hsla(245, 60%, 100%, 0.07);
+}
+
+/* ── Typography Scale ──────────────────────────────────────── */
+:root {
+  /* Font stacks */
+  --font-sans:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  --font-mono:    'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+
+  /* Sizes */
+  --text-xs:   0.72rem;    /* 11.5px */
+  --text-sm:   0.8125rem;  /* 13px   */
+  --text-base: 0.9375rem;  /* 15px   */
+  --text-md:   1rem;       /* 16px   */
+  --text-lg:   1.125rem;   /* 18px   */
+  --text-xl:   1.25rem;    /* 20px   */
+  --text-2xl:  1.5rem;     /* 24px   */
+  --text-3xl:  1.875rem;   /* 30px   */
+  --text-4xl:  2.25rem;    /* 36px   */
+
+  /* Weights */
+  --weight-normal:   400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+  --weight-extrabold: 800;
+
+  /* Line Heights */
+  --leading-tight:  1.25;
+  --leading-snug:   1.375;
+  --leading-normal: 1.55;
+  --leading-relaxed: 1.7;
+
+  /* Spacing scale */
+  --space-0:  0px;
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-7:  28px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Radius */
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   18px;
+  --radius-2xl:  24px;
+  --radius-pill: 9999px;
+
+  /* Layout */
+  --sidebar-width:        248px;
+  --sidebar-collapsed:    72px;
+  --header-height:        60px;
+  --content-max-width:    1280px;
+
+  /* Transitions */
+  --duration-fast:   120ms;
+  --duration-base:   220ms;
+  --duration-slow:   380ms;
+  --ease-default:    cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-out:        cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring:     cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in-out:     cubic-bezier(0.45, 0, 0.55, 1);
+}
