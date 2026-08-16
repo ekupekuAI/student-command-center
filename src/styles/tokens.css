@@ -217,3 +217,37 @@
   --ease-spring:     cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-in-out:     cubic-bezier(0.45, 0, 0.55, 1);
 }
+
+/* ── Glow / Gradient / Ambient Effects ──────────────────────── */
+:root,
+[data-theme="light"] {
+  --brand-gradient:      linear-gradient(135deg, hsl(245, 88%, 62%), hsl(275, 88%, 58%));
+  --brand-gradient-soft: linear-gradient(135deg, hsla(245, 88%, 62%, 0.16), hsla(275, 88%, 58%, 0.12));
+  --glow-brand:          0 8px 24px hsla(245, 82%, 55%, 0.35);
+  --glow-brand-strong:   0 12px 34px hsla(245, 82%, 55%, 0.50);
+  --glow-ring:           0 0 0 4px hsla(245, 85%, 65%, 0.16);
+  --focus-ring:          0 0 0 4px hsla(245, 85%, 65%, 0.22);
+  --shine-gradient:      linear-gradient(105deg, transparent 40%, hsla(0, 0%, 100%, 0.35) 50%, transparent 60%);
+  --aurora-1:            hsla(245, 85%, 62%, 0.16);
+  --aurora-2:            hsla(275, 85%, 58%, 0.12);
+  --aurora-3:            hsla(190, 85%, 55%, 0.10);
+}
+
+[data-theme="dark"] {
+  --brand-gradient:      linear-gradient(135deg, hsl(245, 92%, 68%), hsl(275, 92%, 64%));
+  --brand-gradient-soft: linear-gradient(135deg, hsla(245, 92%, 68%, 0.16), hsla(275, 92%, 64%, 0.12));
+  --glow-brand:          0 8px 28px hsla(245, 88%, 60%, 0.40);
+  --glow-brand-strong:   0 14px 42px hsla(245, 88%, 60%, 0.55);
+  --glow-ring:           0 0 0 4px hsla(245, 92%, 68%, 0.18);
+  --focus-ring:          0 0 0 4px hsla(245, 92%, 68%, 0.26);
+  --shine-gradient:      linear-gradient(105deg, transparent 40%, hsla(0, 0%, 100%, 0.10) 50%, transparent 60%);
+  --aurora-1:            hsla(245, 88%, 62%, 0.14);
+  --aurora-2:            hsla(275, 88%, 58%, 0.10);
+  --aurora-3:            hsla(190, 88%, 54%, 0.08);
+}
+
+/* ── Motion ─────────────────────────────────────────────────── */
+:root {
+  --duration-enter:  460ms;
+  --duration-leave:  200ms;
+}

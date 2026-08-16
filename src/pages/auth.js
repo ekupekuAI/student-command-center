@@ -52,7 +52,7 @@ function clearError(input) {
 
 function buildForm({ mode, onSuccess }) {
   const isLogin = mode === 'login';
-  const card = el('div', { className: 'auth-card' });
+  const card = el('div', { className: 'auth-card auth-enter', style: 'animation-delay: 90ms' });
 
   card.innerHTML = `
     <div class="auth-card-head">
@@ -176,6 +176,65 @@ function buildForm({ mode, onSuccess }) {
 
 let onSwitch = () => {};
 
+/**
+ * Help Center — an expandable "how to sign in & get started" guide shown on
+ * the auth screen. Pure static guidance: no account data, no credentials.
+ */
+function buildHelp() {
+  const wrap = el('div', { className: 'auth-help auth-enter', style: 'animation-delay: 220ms' });
+  wrap.innerHTML = `
+    <button type="button" class="auth-help-toggle" data-help-toggle aria-expanded="false" aria-controls="authHelpBody">
+      <span class="auth-help-toggle-icon" aria-hidden="true">${icons.messageSquare(16)}</span>
+      <span class="auth-help-toggle-label">Help Center — how to sign in</span>
+      <span class="auth-help-chevron" aria-hidden="true">${icons.chevronDown(16)}</span>
+    </button>
+    <div class="auth-help-body" id="authHelpBody">
+      <div class="auth-help-section">
+        <h4>1 · Create your account</h4>
+        <ol>
+          <li>On this screen, tap <strong>Create one</strong> under the sign-in button.</li>
+          <li>Enter your full name, your email address, and a password of 8 or more characters.</li>
+          <li>Tap <strong>Create Account</strong> — you'll be signed in automatically.</li>
+        </ol>
+      </div>
+      <div class="auth-help-section">
+        <h4>2 · Sign in</h4>
+        <ol>
+          <li>Enter the email and password you registered with.</li>
+          <li>Tap <strong>Sign In</strong> to open your Command Center.</li>
+          <li>You stay signed in on this device for up to 7 days.</li>
+        </ol>
+      </div>
+      <div class="auth-help-section">
+        <h4>3 · Explore your Command Center</h4>
+        <ul>
+          <li><strong>Dashboard</strong> — your week at a glance.</li>
+          <li><strong>Subjects · Tasks · Notes</strong> — organize your coursework.</li>
+          <li><strong>Study Sessions</strong> — run a focus timer.</li>
+          <li><strong>AI Assistant</strong> — get help grounded in your own data.</li>
+          <li><strong>Analytics</strong> — track study time and progress.</li>
+        </ul>
+      </div>
+      <div class="auth-help-section">
+        <h4>4 · Staying secure</h4>
+        <ul>
+          <li>Your data stays private to your account.</li>
+          <li>Use <strong>Sign out</strong> when you leave a shared device.</li>
+          <li>Choose a strong, unique password — and never share it.</li>
+        </ul>
+      </div>
+    </div>
+  `;
+
+  const toggle = wrap.querySelector('[data-help-toggle]');
+  const body = wrap.querySelector('.auth-help-body');
+  toggle.addEventListener('click', () => {
+    const open = body.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', String(open));
+  });
+  return wrap;
+}
+
 export function setAuthSwitchHandler(handler) {
   onSwitch = handler;
 }
@@ -184,30 +243,33 @@ export function AuthPage({ onSuccess, initialMode = 'login' }) {
   const wrapper = el('div', { className: 'auth-page' });
 
   const left = el('aside', { className: 'auth-side' });
-  left.innerHTML = `
-    <div class="auth-side-brand">
+  left.appendChild(el('div', { className: 'auth-orb', 'aria-hidden': 'true' }));
+  left.innerHTML += `
+    <div class="auth-side-brand auth-enter">
       <div class="auth-side-logo" aria-hidden="true">SC</div>
       <span>Command Center</span>
     </div>
     <div class="auth-side-body">
-      <h1>Your semester,<br /><em>under control.</em></h1>
-      <p class="auth-side-sub">One hub for courses, tasks, notes, study time, and an AI assistant that knows your workload.</p>
+      <h1 class="auth-enter" style="animation-delay:70ms">Your semester,<br /><em>under control.</em></h1>
+      <p class="auth-side-sub auth-enter" style="animation-delay:130ms">One hub for courses, tasks, notes, study time, and an AI assistant that knows your workload.</p>
       <ul class="auth-side-features">
-        ${FEATURES.map((f) => `
-          <li>
+        ${FEATURES.map((f, i) => `
+          <li class="auth-enter" style="animation-delay:${180 + i * 45}ms">
             <span class="auth-side-feature-icon">${icons[f.icon]?.(18) || ''}</span>
             <span><strong>${f.title}</strong><small>${f.text}</small></span>
           </li>
         `).join('')}
       </ul>
     </div>
-    <p class="auth-side-foot">Your data stays yours — stored in your private account.</p>
+    <p class="auth-side-foot auth-enter" style="animation-delay:460ms">Your data stays yours — stored in your private account.</p>
   `;
 
   const right = el('div', { className: 'auth-main' });
   const panel = el('div', { className: 'auth-panel' });
+  panel.appendChild(el('div', { className: 'auth-mobile-brand' }, '<div class="auth-mobile-logo" aria-hidden="true">SC</div><span>Student Command Center</span>'));
   const form = buildForm({ mode: initialMode, onSuccess });
   panel.appendChild(form);
+  panel.appendChild(buildHelp());
   right.appendChild(panel);
 
   wrapper.appendChild(left);
