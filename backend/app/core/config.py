@@ -4,13 +4,17 @@ Uses pydantic-settings. Credentials are never hard-coded; the real
 connection string lives in `backend/.env` (git-ignored).
 """
 
+import logging
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # backend/ directory (parents: core -> app -> backend)
 BASE_DIR = Path(__file__).resolve().parents[2]
+
+logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -33,12 +37,31 @@ class Settings(BaseSettings):
         "postgresql+psycopg://postgres:postgres@localhost:5432/student_command_center"
     )
 
-    # Comma-separated allowed CORS origins.
+    # Comma-separated allowed CORS origins. The primary env var is
+    # CORS_ORIGINS_RAW (pydantic-settings maps the field name directly).
+    # CORS_ORIGINS is also accepted as an alias because several deployment
+    # platforms and configs document that name; a warning is logged whenever
+    # the alias differs so misconfiguration is visible at boot.
     cors_origins_raw: str = "http://localhost:5173,http://127.0.0.1:5173"
+    cors_origins_alias: str | None = Field(
+        default=None,
+        validation_alias="CORS_ORIGINS",
+        description="Alias so a bare CORS_ORIGINS env var also controls allowed origins.",
+    )
 
     @property
     def cors_origins(self) -> list[str]:
-        return [origin.strip() for origin in self.cors_origins_raw.split(",") if origin.strip()]
+        raw = self.cors_origins_raw
+        alias = self.cors_origins_alias
+        default_raw = Settings.model_fields["cors_origins_raw"].default
+        if alias and raw == default_raw:
+            logger.warning(
+                "CORS origins loaded from CORS_ORIGINS alias (%s); "
+                "prefer setting CORS_ORIGINS_RAW.",
+                alias,
+            )
+            raw = alias
+        return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
     # ── OpenRouter AI (server-side only) ─────────────────────────
     # The API key lives ONLY in backend/.env and is never exposed to the

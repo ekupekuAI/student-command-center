@@ -778,68 +778,6 @@
   font-weight: var(--weight-medium);
 }
 
-/* ── Placeholder Page ──────────────────────────────────────── */
-.placeholder-page {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-  text-align: center;
-  gap: var(--space-5);
-}
-
-.placeholder-icon {
-  width: 80px;
-  height: 80px;
-  border-radius: var(--radius-2xl);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto;
-}
-
-.placeholder-icon svg { width: 36px; height: 36px; }
-
-.placeholder-page h3 {
-  font-size: var(--text-xl);
-  font-weight: var(--weight-bold);
-  letter-spacing: -0.01em;
-}
-
-.placeholder-page p {
-  font-size: var(--text-sm);
-  color: var(--text-tertiary);
-  max-width: 360px;
-  margin: 0 auto;
-  line-height: var(--leading-relaxed);
-}
-
-.placeholder-features {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  justify-content: center;
-  max-width: 460px;
-  margin-top: var(--space-2);
-}
-
-.placeholder-feature-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
-  background: var(--surface-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-pill);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
-  color: var(--text-secondary);
-  box-shadow: var(--shadow-xs);
-}
-
-.placeholder-feature-pill svg { width: 13px; height: 13px; color: var(--text-brand); }
-
 /* ── Section Divider ───────────────────────────────────────── */
 .section-label {
   font-size: var(--text-xs);

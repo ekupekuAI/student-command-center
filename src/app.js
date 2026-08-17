@@ -76,9 +76,9 @@ function mountApp() {
 }
 
 // ── Auth screen ───────────────────────────────────────────────
-function mountAuth() {
+function mountAuth(mode = 'login') {
   clearApp();
-  const page = AuthPage({ onSuccess: mountApp });
+  const page = AuthPage({ onSuccess: mountApp, initialMode: mode });
   document.body.appendChild(page);
 }
 
@@ -99,9 +99,9 @@ function boot() {
   }
 }
 
-setAuthSwitchHandler(() => {
-  // Toggling is handled inside AuthPage; this hook exists for future
-  // cross-screen navigation needs.
+setAuthSwitchHandler((currentMode) => {
+  // Toggle between the sign-in and create-account forms.
+  mountAuth(currentMode === 'login' ? 'register' : 'login');
 });
 
 // Any 401 on a protected endpoint (expired / revoked token) returns here.

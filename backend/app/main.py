@@ -6,7 +6,8 @@ Production safeguards applied here:
   - Refuses to start with the placeholder JWT secret when ENVIRONMENT=production.
   - Disables interactive docs (/docs, /redoc) in production.
   - Adds defensive security headers on every response.
-  - CORS restricted to the configured origins (env var CORS_ORIGINS).
+  - CORS restricted to the configured origins (env var CORS_ORIGINS_RAW,
+    with CORS_ORIGINS accepted as an alias).
 """
 
 from fastapi import FastAPI, Request
