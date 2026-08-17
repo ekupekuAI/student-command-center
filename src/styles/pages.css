@@ -270,7 +270,7 @@
   width: 34px;
   height: 34px;
   flex: 0 0 auto;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-pill);
   display: flex;
   align-items: center;
   justify-content: center;

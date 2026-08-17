@@ -7,6 +7,7 @@
 import { icons } from './icons.js';
 import { authService } from './services/authService.js';
 import { taskService } from './services/taskService.js';
+import { musicService } from './services/musicService.js';
 import { setPendingSearch } from './searchBridge.js';
 import { isOffline, onStatusChange } from './services/apiClient.js';
 
@@ -100,6 +101,16 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
 });
 
 // ── Shell Factory ────────────────────────────────────────────
+
+// Close any open floating music panel when clicking elsewhere (delegated once
+// at module level so it doesn't accumulate listeners across shell re-mounts).
+document.addEventListener('click', (e) => {
+  if (!(e.target instanceof Element) || e.target.closest('.music-fab')) return;
+  document.querySelectorAll('.music-fab.open').forEach((fab) => {
+    fab.classList.remove('open');
+    fab.querySelector('#musicFabToggle')?.setAttribute('aria-expanded', 'false');
+  });
+});
 
 export function createShell() {
   // Apply stored theme immediately
@@ -356,10 +367,88 @@ export function createShell() {
     const breadcrumb = document.getElementById('breadcrumbPage');
     if (breadcrumb) breadcrumb.textContent = PAGE_LABELS[path] || 'Dashboard';
 
-    // Close mobile menu on navigation
+    // Close the floating music panel and mobile menu on navigation
+    musicFab.querySelector('.music-popover')?.classList.remove('open');
+    musicFab.querySelector('#musicFabToggle')?.setAttribute('aria-expanded', 'false');
     sidebar.classList.remove('mobile-open');
     overlay.classList.remove('visible');
   }
+
+  // ── Floating ambient music control ──────────────────────────
+  const musicFab = el('div', {
+    className: `music-fab${musicService.getState().playing ? ' is-playing' : ''}`,
+    id: 'musicFab',
+  });
+  musicFab.innerHTML = `
+    <button class="music-fab-toggle" id="musicFabToggle" type="button"
+      aria-label="Ambient music" aria-expanded="false" aria-controls="musicPopover" title="Ambient music">
+      <span class="music-fab-note">${icons.music(20)}</span>
+      <span class="music-eq" aria-hidden="true"><span></span><span></span><span></span></span>
+    </button>
+    <div class="music-popover" id="musicPopover" role="group" aria-label="Ambient music controls">
+      <div class="music-popover-header">
+        <span class="music-popover-title">Ambient music</span>
+        <span class="music-popover-state" id="musicStateText">Paused</span>
+      </div>
+      <div class="music-popover-controls">
+        <button class="music-btn" id="musicPlayBtn" type="button" aria-label="Play music">${icons.play(16)}</button>
+        <input class="music-slider" id="musicVolume" type="range" min="0" max="1" step="0.01" value="${musicService.getState().volume}" aria-label="Volume" />
+        <button class="music-btn" id="musicMuteBtn" type="button" aria-label="Mute">${icons.volume(16)}</button>
+      </div>
+    </div>
+  `;
+  shell.appendChild(musicFab);
+
+  const updateMusicUI = () => {
+    const s = musicService.getState();
+    musicFab.classList.toggle('is-playing', s.playing);
+
+    const playBtn = document.getElementById('musicPlayBtn');
+    if (playBtn) {
+      playBtn.innerHTML = s.playing ? icons.pause(16) : icons.play(16);
+      playBtn.setAttribute('aria-label', s.playing ? 'Pause music' : 'Play music');
+    }
+
+    const muteBtn = document.getElementById('musicMuteBtn');
+    if (muteBtn) {
+      muteBtn.innerHTML = s.muted ? icons.mute(16) : icons.volume(16);
+      muteBtn.classList.toggle('is-active', s.muted);
+      muteBtn.setAttribute('aria-label', s.muted ? 'Unmute' : 'Mute');
+    }
+
+    const slider = document.getElementById('musicVolume');
+    if (slider) slider.value = String(s.volume);
+
+    const stateText = document.getElementById('musicStateText');
+    if (stateText) stateText.textContent = s.playing ? 'Playing' : s.muted ? 'Muted' : 'Paused';
+
+    const toggle = document.getElementById('musicFabToggle');
+    if (toggle) toggle.setAttribute('title', s.playing ? 'Ambient music (playing)' : 'Ambient music');
+  };
+
+  document.getElementById('musicFabToggle')?.addEventListener('click', () => {
+    const popover = musicFab.querySelector('.music-popover');
+    const open = popover.classList.toggle('open');
+    musicFab.querySelector('#musicFabToggle').setAttribute('aria-expanded', String(open));
+  });
+
+  document.getElementById('musicPlayBtn')?.addEventListener('click', () => {
+    musicService.toggle();
+    updateMusicUI();
+  });
+
+  document.getElementById('musicMuteBtn')?.addEventListener('click', () => {
+    musicService.toggleMute();
+    updateMusicUI();
+  });
+
+  document.getElementById('musicVolume')?.addEventListener('input', (e) => {
+    musicService.setVolume(parseFloat(e.target.value));
+    updateMusicUI();
+  });
+
+  updateMusicUI();
+  musicService.armAutoresume(updateMusicUI);
 
   return {
     outlet: main,

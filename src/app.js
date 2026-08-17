@@ -28,6 +28,7 @@ import { studyService } from './services/studyService.js';
 import { activityService } from './services/activityService.js';
 import { authService } from './services/authService.js';
 import tokenStore from './services/tokenStore.js';
+import { musicService } from './services/musicService.js';
 import { runMigrationCheck } from './services/migrationService.js';
 
 let shell = null;
@@ -81,6 +82,7 @@ function mountApp() {
 // ── Auth screen ───────────────────────────────────────────────
 function mountAuth(mode = 'login') {
   clearApp();
+  musicService.stop();
   const page = AuthPage({ onSuccess: mountApp, initialMode: mode });
   document.body.appendChild(page);
 }
