@@ -429,8 +429,7 @@ export function createShell() {
   };
 
   document.getElementById('musicFabToggle')?.addEventListener('click', () => {
-    const popover = musicFab.querySelector('.music-popover');
-    const open = popover.classList.toggle('open');
+    const open = musicFab.classList.toggle('open');
     musicFab.querySelector('#musicFabToggle').setAttribute('aria-expanded', String(open));
   });
 
