@@ -556,12 +556,16 @@
   background: var(--surface-overlay);
   z-index: 150;
   opacity: 0;
+  pointer-events: none;
   transition: opacity var(--duration-base) var(--ease-default);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
 
-.sidebar-overlay.visible { opacity: 1; }
+.sidebar-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
 
 /* ── Floating Ambient Music Control ────────────────────────── */
 .music-fab {

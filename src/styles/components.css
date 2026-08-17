@@ -2370,13 +2370,14 @@
   color: var(--color-warning, #b45309);
   border-bottom: 1px solid rgba(180, 83, 9, 0.25);
   font-size: var(--text-sm);
-  font-weight: 600;
+font-weight: 600;
   text-align: center;
   padding: 8px 48px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
+  pointer-events: none;
 }
 
 .app-offline-banner .app-offline-dot {
