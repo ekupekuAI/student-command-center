@@ -189,6 +189,35 @@ def test_admin_cannot_demote_self(client, db_session):
     assert response.status_code == 400
 
 
+def test_admin_can_approve_pending_user_with_admin_role(client, db_session):
+    """A pending account that holds the admin role must still be approvable."""
+    admin = _make_user(db_session, email="boss@example.com", role="admin")
+    headers = _login(client, admin.email)
+    target = _make_user(db_session, email="pending-admin@example.com", role="admin", status="pending")
+
+    approved = client.post(f"/api/admin/users/{target.id}/approve", headers=headers)
+    assert approved.status_code == 200
+    assert approved.json()["account_status"] == "approved"
+
+    # Once approved it can log in as an active admin.
+    ok = client.post(
+        "/api/auth/login",
+        json={"email": target.email, "password": "supersecret1"},
+    )
+    assert ok.status_code == 200
+    assert ok.json()["user"]["role"] == "admin"
+
+
+def test_admin_can_delete_pending_admin_role_user(client, db_session):
+    """Cleanup of a stuck/leftover pending admin-role account must work."""
+    admin = _make_user(db_session, email="boss@example.com", role="admin")
+    headers = _login(client, admin.email)
+    target = _make_user(db_session, email="stuck@example.com", role="admin", status="pending")
+
+    deleted = client.delete(f"/api/admin/users/{target.id}", headers=headers)
+    assert deleted.status_code == 204
+
+
 def test_admin_update_duplicate_email_409(client, db_session):
     admin = _make_user(db_session, email="boss@example.com", role="admin")
     headers = _login(client, admin.email)

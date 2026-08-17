@@ -39,13 +39,19 @@ def _get_user_or_404(db: Session, user_id: str) -> User:
 
 
 def _guard_target(actor: User, target: User) -> None:
-    """Enforce who may manage whom (self is allowed, admins only manage users)."""
+    """Enforce who may manage whom.
+
+    Self-management is allowed. Only other ACTIVE admin accounts are protected
+    (no delete/edit/reject of a fellow approved admin). Pending or rejected
+    accounts are always manageable — even if they carry the admin role — so
+    approvals, rejections, and cleanups can never get stuck.
+    """
     if target.id == actor.id:
         return
-    if target.role != ROLE_USER:
+    if target.role == ROLE_ADMIN and target.account_status == STATUS_APPROVED:
         raise HTTPException(
             status_code=403,
-            detail="Admins can only manage regular user accounts.",
+            detail="Admins can only manage user accounts, not other active admins.",
         )
 
 
