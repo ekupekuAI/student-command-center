@@ -17,6 +17,10 @@ dist-ssr
 .env.*
 !.env.example
 
+# Scratch / smoke-test artifacts
+backend/_smoke_e2e.db
+_scratch*
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
