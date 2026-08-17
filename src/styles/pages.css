@@ -223,7 +223,7 @@
   accent-color: var(--color-brand-500);
 }
 
-/* ── Admin / Master Admin ──────────────────────────────────── */
+/* ── Admin console ──────────────────────────────────────────── */
 .admin-table {
   display: flex;
   flex-direction: column;

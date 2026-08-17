@@ -1,26 +1,25 @@
-"""Admin & master-admin endpoints.
+"""Admin endpoints (single admin role).
 
 Role model:
   - `user`          — standard account (pending → approved/rejected by an admin)
-  - `admin`         — approves/rejects users, resets passwords, edits/deletes users
-  - `master_admin`  — everything an admin can do, plus managing admin roles
+  - `admin`         — the one privileged role: approves/rejects users, resets
+                      passwords, edits/deletes users, and manages roles
 
 Guards:
-  - `require_admin` / `require_master_admin` come from core.security.
-  - A regular admin can never touch admin or master-admin accounts.
-  - No one can delete their own account; master admins cannot manage another
-    master admin. Admin endpoints never return password hashes or secrets.
+  - `require_admin` comes from core.security.
+  - An admin can only manage regular user accounts (never another admin).
+  - No one can delete their own account or change their own role.
+  - Admin endpoints never return password hashes or secrets.
 """
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.security import AdminUser, MasterAdminUser
+from app.core.security import AdminUser
 from app.database.session import get_db
 from app.models.user import (
     ROLE_ADMIN,
-    ROLE_MASTER_ADMIN,
     ROLE_USER,
     STATUS_APPROVED,
     STATUS_REJECTED,
@@ -40,19 +39,13 @@ def _get_user_or_404(db: Session, user_id: str) -> User:
 
 
 def _guard_target(actor: User, target: User) -> None:
-    """Enforce who may manage whom."""
+    """Enforce who may manage whom (self is allowed, admins only manage users)."""
     if target.id == actor.id:
         return
-    if actor.role != ROLE_MASTER_ADMIN:
-        if target.role != ROLE_USER:
-            raise HTTPException(
-                status_code=403,
-                detail="Only a master admin can manage admin or master admin accounts.",
-            )
-    elif target.role == ROLE_MASTER_ADMIN:
+    if target.role != ROLE_USER:
         raise HTTPException(
             status_code=403,
-            detail="Another master admin account cannot be managed.",
+            detail="Admins can only manage regular user accounts.",
         )
 
 
@@ -128,12 +121,8 @@ def update_user(
     _guard_target(current_user, target)
     data = payload.model_dump(exclude_unset=True)
 
-    if (
-        data.get("role") == ROLE_MASTER_ADMIN
-        and target.role == ROLE_MASTER_ADMIN
-        and target.id != current_user.id
-    ):
-        raise HTTPException(status_code=403, detail="Another master admin cannot be managed.")
+    if data.get("role") and data["role"] != ROLE_ADMIN and target.id == current_user.id:
+        raise HTTPException(status_code=400, detail="An admin cannot remove their own role.")
 
     if data.get("email"):
         email = auth_service.normalize_email(data["email"])
@@ -191,28 +180,23 @@ def delete_user(
     )
 
 
-# ── Master-admin-only: role management ──────────────────────────
+# ── Role management ──────────────────────────────────────────
 
 @router.post("/users/{user_id}/role", response_model=UserRead)
 def set_role(
     user_id: str,
     role: str,
-    current_user: MasterAdminUser,
+    current_user: AdminUser,
     db: Session = Depends(get_db),
 ) -> User:
-    """Master admin: promote/demote a user (role in user/admin/master_admin)."""
-    if role not in (ROLE_USER, ROLE_ADMIN, ROLE_MASTER_ADMIN):
+    """Promote/demote any user between the user and admin roles."""
+    if role not in (ROLE_USER, ROLE_ADMIN):
         raise HTTPException(status_code=422, detail="Invalid role.")
     target = _get_user_or_404(db, user_id)
-    if target.id == current_user.id and role != ROLE_MASTER_ADMIN:
+    if target.id == current_user.id:
         raise HTTPException(
             status_code=400,
-            detail="A master admin cannot remove their own role.",
-        )
-    if target.role == ROLE_MASTER_ADMIN and target.id != current_user.id:
-        raise HTTPException(
-            status_code=403,
-            detail="Another master admin account cannot be managed.",
+            detail="An admin cannot change their own role.",
         )
     target.role = role
     db.commit()

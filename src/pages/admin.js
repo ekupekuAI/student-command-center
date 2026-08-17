@@ -1,18 +1,17 @@
 /**
- * admin.js — Admin & Master Admin console
+ * admin.js — Admin console
  *
  * Admins land here instead of the student dashboard. The console is scoped to
  * user management only: approve/reject pending accounts, edit, reset passwords,
- * delete users, and (for master admins) manage roles. It also surfaces the
- * admin's own sign-in history (login count / last login) and recent actions.
- * Access is enforced by the backend; the page also shows an access-denied
- * state for non-admins.
+ * delete users, and manage roles. It also surfaces the admin's own sign-in
+ * history (login count / last login) and recent actions. Access is enforced by
+ * the backend; the page also shows an access-denied state for non-admins.
  */
 
 import { icons } from '../icons.js';
 import { authService } from '../services/authService.js';
 import { showToast } from '../services/notify.js';
-import { adminService, isAdmin, isMasterAdmin } from '../services/adminService.js';
+import { adminService, isAdmin } from '../services/adminService.js';
 
 function esc(value) {
   return String(value ?? '').replace(/[&<>"']/g, (c) => (
@@ -52,8 +51,8 @@ function timeAgo(iso) {
 
 const STATUS_LABEL = { pending: 'Pending', approved: 'Approved', rejected: 'Rejected' };
 const STATUS_CLASS = { pending: 'badge-warning', approved: 'badge-success', rejected: 'badge-error' };
-const ROLE_LABEL = { user: 'User', admin: 'Admin', master_admin: 'Master' };
-const ROLE_CLASS = { user: 'badge-neutral', admin: 'badge-brand', master_admin: 'badge-warning' };
+const ROLE_LABEL = { user: 'User', admin: 'Admin' };
+const ROLE_CLASS = { user: 'badge-neutral', admin: 'badge-brand' };
 
 const ACTION_META = {
   approve:        { label: 'Approved',    accent: 'green' },
@@ -64,18 +63,18 @@ const ACTION_META = {
   set_role:       { label: 'Role changed', accent: 'violet' },
 };
 
-export function AdminPage({ master = false } = {}) {
+export function AdminPage() {
   const container = document.createElement('div');
   container.className = 'page-content';
 
   const me = authService.currentUser;
-  const allowed = master ? isMasterAdmin(me) : isAdmin(me);
+  const allowed = isAdmin(me);
 
   if (!allowed) {
     container.innerHTML = `
       <div class="page-header">
         <div class="page-header-text">
-          <h2>${master ? 'Master Admin' : 'Admin'}</h2>
+          <h2>Admin</h2>
           <p>Restricted area</p>
         </div>
       </div>
@@ -91,7 +90,6 @@ export function AdminPage({ master = false } = {}) {
     return container;
   }
 
-  const isMaster = isMasterAdmin(me);
   let overview = null;
   let users = [];
   let pending = [];
@@ -178,8 +176,13 @@ export function AdminPage({ master = false } = {}) {
 
   function userRow(u) {
     const isMe = me && me.id === u.id;
-    const showRoleControl = isMaster && u.role !== 'master_admin';
-    const canManageThis = !(u.role === 'master_admin' && u.id !== me.id);
+    const roleControl = !isMe ? `
+      <select class="admin-role-select" data-role="${u.id}" aria-label="Change role for ${esc(u.name)}">
+        <option value="">Role…</option>
+        <option value="user" ${u.role === 'user' ? 'selected' : ''}>User</option>
+        <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+      </select>
+    ` : '';
 
     return `
       <div class="admin-row">
@@ -196,19 +199,12 @@ export function AdminPage({ master = false } = {}) {
         <div class="admin-cell">${statusPill(u.account_status)}</div>
         <div class="admin-cell admin-cell-date">${formatDate(u.created_at)}</div>
         <div class="admin-cell admin-actions">
-          ${u.account_status !== 'approved' && canManageThis ? `<button class="btn btn-sm btn-primary" data-act="approve:${u.id}">Approve</button>` : ''}
-          ${u.account_status !== 'rejected' && canManageThis ? `<button class="btn btn-sm btn-danger" data-act="reject:${u.id}">Reject</button>` : ''}
-          ${canManageThis ? `<button class="btn btn-sm btn-secondary" data-act="edit:${u.id}">Edit</button>` : ''}
-          ${canManageThis ? `<button class="btn btn-sm btn-secondary" data-act="reset:${u.id}">Reset password</button>` : ''}
-          ${!isMe && canManageThis ? `<button class="btn btn-sm btn-danger" data-act="delete:${u.id}">Delete</button>` : ''}
-          ${showRoleControl ? `
-            <select class="admin-role-select" data-role="${u.id}" aria-label="Change role for ${esc(u.name)}">
-              <option value="">Role…</option>
-              <option value="user" ${u.role === 'user' ? 'selected' : ''}>User</option>
-              <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
-              <option value="master_admin">Master Admin</option>
-            </select>
-          ` : ''}
+          ${!isMe && u.account_status !== 'approved' ? `<button class="btn btn-sm btn-primary" data-act="approve:${u.id}">Approve</button>` : ''}
+          ${!isMe && u.account_status !== 'rejected' ? `<button class="btn btn-sm btn-danger" data-act="reject:${u.id}">Reject</button>` : ''}
+          ${!isMe ? `<button class="btn btn-sm btn-secondary" data-act="edit:${u.id}">Edit</button>` : ''}
+          ${!isMe ? `<button class="btn btn-sm btn-secondary" data-act="reset:${u.id}">Reset password</button>` : ''}
+          ${!isMe ? `<button class="btn btn-sm btn-danger" data-act="delete:${u.id}">Delete</button>` : ''}
+          ${roleControl}
         </div>
       </div>
     `;
@@ -217,7 +213,7 @@ export function AdminPage({ master = false } = {}) {
   function overviewHtml() {
     if (!overview) return '';
     const c = overview.counts || {};
-    const roleLabel = isMaster ? 'Master Admin' : 'Admin';
+    const roleLabel = 'Admin';
     const loginWord = overview.login_count === 1 ? 'login' : 'logins';
     const lastLogin = overview.last_login_at ? formatDateTime(overview.last_login_at) : 'Never';
     const memberSince = me ? formatDate(me.created_at || overview.created_at) : '—';
@@ -290,10 +286,8 @@ export function AdminPage({ master = false } = {}) {
   }
 
   function render() {
-    const title = isMaster ? 'Master Admin' : 'Admin';
-    const subtitle = isMaster
-      ? 'Full control: manage users, roles, and approvals.'
-      : 'Manage users: approve, reject, edit, reset, and remove accounts.';
+    const title = 'Admin';
+    const subtitle = 'Manage users: approve, reject, edit, reset, delete, and manage roles.';
 
     let body = '';
     if (loading) {

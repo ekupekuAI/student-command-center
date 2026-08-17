@@ -39,8 +39,7 @@ function mountApp() {
   clearApp();
 
   const user = authService.currentUser;
-  const isAdminRole = user && (user.role === 'admin' || user.role === 'master_admin');
-  const isMaster = user && user.role === 'master_admin';
+  const isAdminRole = user && user.role === 'admin';
 
   shell = createShell();
   router = new Router({
@@ -53,9 +52,8 @@ function mountApp() {
   if (isAdminRole) {
     // Admins only get the management console — no student tabs or pages.
     router
-      .register('#/dashboard', () => AdminPage({ master: isMaster }))
-      .register('#/admin', () => AdminPage({ master: false }))
-      .register('#/master-admin', () => AdminPage({ master: true }));
+      .register('#/dashboard', AdminPage)
+      .register('#/admin', AdminPage);
   } else {
     router
       .register('#/dashboard', DashboardPage)
@@ -67,8 +65,7 @@ function mountApp() {
       .register('#/ai',        AIPage)
       .register('#/profile',   ProfilePage)
       .register('#/settings',  SettingsPage)
-      .register('#/admin',        () => AdminPage({ master: false }))
-      .register('#/master-admin', () => AdminPage({ master: true }));
+      .register('#/admin', AdminPage);
   }
 
   router.start();

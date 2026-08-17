@@ -108,7 +108,7 @@ class AdminUserUpdate(BaseModel):
 
     name: str | None = Field(default=None, min_length=1, max_length=120)
     email: EmailStr | None = None
-    role: Literal["user", "admin", "master_admin"] | None = None
+    role: Literal["user", "admin"] | None = None
     account_status: Literal["pending", "approved", "rejected"] | None = None
 
     @field_validator("name")

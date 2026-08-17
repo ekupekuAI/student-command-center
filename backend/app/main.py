@@ -13,6 +13,7 @@ Production safeguards applied here:
 """
 
 from contextlib import asynccontextmanager
+import logging
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -29,6 +30,8 @@ from app.routers import (
     subjects,
     tasks,
 )
+
+logger = logging.getLogger(__name__)
 
 _PLACEHOLDER_JWT = "dev-only-secret-change-me"
 
@@ -54,7 +57,7 @@ async def _security_headers_middleware(request: Request, call_next):
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
-    """Seed the master admin account once at startup (no-op unless configured)."""
+    """Seed the admin account once at startup (no-op unless configured)."""
     if settings.admin_email and settings.admin_password:
         from app.database.session import SessionLocal
         from app.services.auth_service import ensure_admin
@@ -62,6 +65,9 @@ async def _lifespan(app: FastAPI):
         db = SessionLocal()
         try:
             ensure_admin(db)
+        except Exception:
+            # Never crash startup over admin seeding; log and continue.
+            logger.exception("Admin bootstrap failed at startup")
         finally:
             db.close()
     yield

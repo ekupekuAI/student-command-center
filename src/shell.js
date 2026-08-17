@@ -40,8 +40,7 @@ const NAV_SECTIONS = [
   {
     label: 'Management',
     items: [
-      { path: '#/admin',        label: 'Admin',        iconKey: 'layers',  adminOnly: true },
-      { path: '#/master-admin', label: 'Master Admin', iconKey: 'zap',     masterOnly: true },
+      { path: '#/admin', label: 'Admin', iconKey: 'layers', adminOnly: true },
     ],
   },
 ];
@@ -141,11 +140,10 @@ export function createShell() {
 
   const allNavItems = [];
   const currentRole = authService.currentUser && authService.currentUser.role;
-  const isAdminRole = currentRole === 'admin' || currentRole === 'master_admin';
-  const isMaster = currentRole === 'master_admin';
+  const isAdminRole = currentRole === 'admin';
 
   const canSeeItem = (item) => {
-    if (isAdminRole) return item.adminOnly || (item.masterOnly && isMaster);
+    if (isAdminRole) return item.adminOnly;
     return !item.adminOnly && !item.masterOnly;
   };
 
@@ -229,7 +227,7 @@ export function createShell() {
       ${icons.menu(20)}
     </button>
     <div class="header-breadcrumb">
-      <span class="breadcrumb-page" id="breadcrumbPage">${isAdminRole ? (isMaster ? 'Master Admin' : 'Admin') : 'Dashboard'}</span>
+      <span class="breadcrumb-page" id="breadcrumbPage">${isAdminRole ? 'Admin' : 'Dashboard'}</span>
     </div>
     <div class="header-actions">
       ${isAdminRole ? '' : `
@@ -352,7 +350,7 @@ export function createShell() {
 
   // ── Active nav state update ────────────────────────────────
   const PAGE_LABELS = {
-    '#/dashboard': isAdminRole ? (isMaster ? 'Master Admin' : 'Admin') : 'Dashboard',
+    '#/dashboard': isAdminRole ? 'Admin' : 'Dashboard',
     '#/subjects':  'Subjects',
     '#/tasks':     'Tasks & Assignments',
     '#/study':     'Study Sessions',
@@ -362,7 +360,6 @@ export function createShell() {
     '#/profile':   'Profile',
     '#/settings':  'Settings',
     '#/admin':     'Admin',
-    '#/master-admin': 'Master Admin',
   };
 
   function updateActiveNav(path) {

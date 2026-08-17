@@ -69,12 +69,21 @@ def auth_headers(user, db_session):
 
 @pytest.fixture
 def client(db_session, user, monkeypatch):
-    """FastAPI TestClient with a mocked AI provider and SQLite-backed DB."""
+    """FastAPI TestClient with a mocked AI provider and SQLite-backed DB.
+
+    Admin bootstrap is disabled so tests are hermetic: without this, the app
+    lifespan would seed the configured admin against the real database (via
+    backend/.env) on every TestClient startup.
+    """
     from fastapi.testclient import TestClient
 
+    from app.core.config import settings
     from app.database.session import get_db
     from app.main import app
     from app.services.ai_service import ai_service
+
+    monkeypatch.setattr(settings, "admin_email", "")
+    monkeypatch.setattr(settings, "admin_password", "")
 
     def override_get_db() -> Generator[Session, None, None]:
         yield db_session

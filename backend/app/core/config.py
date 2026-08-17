@@ -90,12 +90,12 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24 * 7
 
-    # ── Master admin bootstrap ────────────────────────────────
-    # When set, the backend seeds a master-admin account at startup (idempotent).
+    # ── Admin bootstrap ───────────────────────────────────────
+    # When set, the backend seeds the admin account at startup (idempotent).
     # Credentials live ONLY in the environment / backend/.env — never in code.
     admin_email: str = ""
     admin_password: str = ""
-    admin_name: str = "Master Admin"
+    admin_name: str = "Admin"
 
     # ── Operational toggles ───────────────────────────────────
     @property

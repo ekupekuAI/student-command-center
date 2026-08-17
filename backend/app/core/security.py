@@ -20,7 +20,6 @@ from app.core.config import settings
 from app.database.session import get_db
 from app.models.user import (
     ROLE_ADMIN,
-    ROLE_MASTER_ADMIN,
     STATUS_APPROVED,
     User,
 )
@@ -112,14 +111,8 @@ def _require_role(user: User, *roles: str) -> User:
 
 
 def require_admin(user: CurrentUser) -> User:
-    """Allow any admin or master admin through."""
-    return _require_role(user, ROLE_ADMIN, ROLE_MASTER_ADMIN)
-
-
-def require_master_admin(user: CurrentUser) -> User:
-    """Allow only the master admin through."""
-    return _require_role(user, ROLE_MASTER_ADMIN)
+    """Allow any admin through (the single privileged role)."""
+    return _require_role(user, ROLE_ADMIN)
 
 
 AdminUser = Annotated[User, Depends(require_admin)]
-MasterAdminUser = Annotated[User, Depends(require_master_admin)]

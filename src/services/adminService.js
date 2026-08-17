@@ -1,8 +1,8 @@
 /**
- * adminService.js — Admin & master-admin API
+ * adminService.js — Admin API
  *
- * Wraps the /admin endpoints. Only users whose token carries an admin role
- * (admin / master_admin) are authorized; the backend enforces this.
+ * Wraps the /admin endpoints. Only users whose token carries the admin role
+ * are authorized; the backend enforces this.
  */
 
 import { apiClient } from './apiClient.js';
@@ -19,7 +19,6 @@ export const adminService = {
   setRole: (userId, role) => apiClient.post(`/admin/users/${userId}/role?role=${encodeURIComponent(role)}`),
 };
 
-export const isAdmin = (user) => !!user && (user.role === 'admin' || user.role === 'master_admin');
-export const isMasterAdmin = (user) => !!user && user.role === 'master_admin';
+export const isAdmin = (user) => !!user && user.role === 'admin';
 
 export default adminService;

@@ -1,7 +1,7 @@
-"""Tests for the admin & master-admin approval/manage flow.
+"""Tests for the admin approval/manage flow.
 
 Covers the pending→approved/rejected lifecycle, login gating, admin CRUD on
-users, role-based guards, and immediate token revocation on reject.
+users, role guards, and immediate token revocation on reject.
 """
 
 from __future__ import annotations
@@ -159,9 +159,9 @@ def test_admin_cannot_manage_another_admin(client, db_session):
     assert blocked_role.status_code == 403
 
 
-def test_master_admin_can_promote_and_demote(client, db_session):
-    master = _make_user(db_session, email="master@example.com", role="master_admin")
-    headers = _login(client, master.email)
+def test_admin_can_promote_and_demote(client, db_session):
+    admin = _make_user(db_session, email="admin@example.com", role="admin")
+    headers = _login(client, admin.email)
     regular = _make_user(db_session, email="regular@example.com", status="approved")
 
     promoted = client.post(f"/api/admin/users/{regular.id}/role?role=admin", headers=headers)
@@ -173,28 +173,19 @@ def test_master_admin_can_promote_and_demote(client, db_session):
     assert demoted.json()["role"] == "user"
 
 
-def test_regular_admin_cannot_promote(client, db_session):
+def test_admin_cannot_delete_own_account(client, db_session):
     admin = _make_user(db_session, email="admin@example.com", role="admin")
     headers = _login(client, admin.email)
-    regular = _make_user(db_session, email="regular@example.com", status="approved")
 
-    response = client.post(f"/api/admin/users/{regular.id}/role?role=admin", headers=headers)
-    assert response.status_code == 403
-
-
-def test_master_admin_cannot_delete_own_account(client, db_session):
-    master = _make_user(db_session, email="master@example.com", role="master_admin")
-    headers = _login(client, master.email)
-
-    response = client.delete(f"/api/admin/users/{master.id}", headers=headers)
+    response = client.delete(f"/api/admin/users/{admin.id}", headers=headers)
     assert response.status_code == 400
 
 
-def test_master_admin_cannot_demote_self(client, db_session):
-    master = _make_user(db_session, email="master@example.com", role="master_admin")
-    headers = _login(client, master.email)
+def test_admin_cannot_demote_self(client, db_session):
+    admin = _make_user(db_session, email="admin@example.com", role="admin")
+    headers = _login(client, admin.email)
 
-    response = client.post(f"/api/admin/users/{master.id}/role?role=user", headers=headers)
+    response = client.post(f"/api/admin/users/{admin.id}/role?role=user", headers=headers)
     assert response.status_code == 400
 
 
@@ -212,21 +203,21 @@ def test_admin_update_duplicate_email_409(client, db_session):
     assert response.status_code == 409
 
 
-# ── Master admin seeding ────────────────────────────────────────
+# ── Admin seeding ──────────────────────────────────────────────
 
 
-def test_ensure_admin_creates_master_admin(db_session, monkeypatch):
+def test_ensure_admin_creates_admin(db_session, monkeypatch):
     from app.core.config import settings
     from app.services.auth_service import ensure_admin
 
-    monkeypatch.setattr(settings, "admin_email", "master@example.com")
+    monkeypatch.setattr(settings, "admin_email", "admin@example.com")
     monkeypatch.setattr(settings, "admin_password", "super-secret-1")
     monkeypatch.setattr(settings, "admin_name", "Big Boss")
 
     user = ensure_admin(db_session)
-    assert user.role == "master_admin"
+    assert user.role == "admin"
     assert user.account_status == "approved"
-    assert user.email == "master@example.com"
+    assert user.email == "admin@example.com"
 
     # Idempotent: a second call does not duplicate the account.
     again = ensure_admin(db_session)

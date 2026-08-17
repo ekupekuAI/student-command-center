@@ -22,7 +22,6 @@ from app.models.subject import Subject
 from app.models.task import Task
 from app.models.user import (
     ROLE_ADMIN,
-    ROLE_MASTER_ADMIN,
     STATUS_APPROVED,
     STATUS_PENDING,
     User,
@@ -80,7 +79,7 @@ def register(db: Session, name: str, email: str, password: str) -> User:
 
 
 def ensure_admin(db: Session) -> User | None:
-    """Idempotently create (or refresh) the master admin from configured env
+    """Idempotently create (or refresh) the admin from configured env
     credentials. No-op unless ADMIN_EMAIL and ADMIN_PASSWORD are set. Never
     overwrites an existing admin's password — only role/status/name."""
     email = settings.admin_email
@@ -91,15 +90,15 @@ def ensure_admin(db: Session) -> User | None:
     user = db.scalar(select(User).where(User.email == normalized))
     if user is None:
         user = User(
-            name=settings.admin_name or "Master Admin",
+            name=settings.admin_name or "Admin",
             email=normalized,
             password_hash=hash_password(password),
-            role=ROLE_MASTER_ADMIN,
+            role=ROLE_ADMIN,
             account_status=STATUS_APPROVED,
         )
         db.add(user)
     else:
-        user.role = ROLE_MASTER_ADMIN
+        user.role = ROLE_ADMIN
         user.account_status = STATUS_APPROVED
         user.name = settings.admin_name or user.name
     db.commit()
@@ -162,7 +161,7 @@ def compute_admin_overview(db: Session, admin: User) -> dict:
     )
     total = db.scalar(select(func.count()).select_from(User)) or 0
     admins = db.scalar(
-        select(func.count()).where(User.role.in_((ROLE_ADMIN, ROLE_MASTER_ADMIN)))
+        select(func.count()).where(User.role == ROLE_ADMIN)
     ) or 0
     recent = db.scalars(
         select(Activity)

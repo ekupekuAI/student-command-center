@@ -18,10 +18,9 @@ def _uuid() -> str:
     return uuid.uuid4().hex
 
 
-# Roles, ordered by privilege.
+# Roles (single privileged role: admin).
 ROLE_USER = "user"
 ROLE_ADMIN = "admin"
-ROLE_MASTER_ADMIN = "master_admin"
 
 # Account approval gate for new registrations.
 STATUS_PENDING = "pending"
@@ -37,7 +36,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    # RBAC role: ROLE_USER / ROLE_ADMIN / ROLE_MASTER_ADMIN.
+    # RBAC role: ROLE_USER / ROLE_ADMIN.
     role: Mapped[str] = mapped_column(String(20), nullable=False, server_default=ROLE_USER)
     # Approval gate: STATUS_PENDING / STATUS_APPROVED / STATUS_REJECTED.
     # New registrations are created as pending; only approved accounts can log in.
