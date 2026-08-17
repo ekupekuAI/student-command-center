@@ -5,7 +5,7 @@
  */
 
 import { icons } from '../icons.js';
-import { currentUser } from '../data/mock.js';
+import { authService } from '../services/authService.js';
 import { taskService } from '../services/taskService.js';
 import { subjectService } from '../services/subjectService.js';
 import { studyService } from '../services/studyService.js';
@@ -48,7 +48,7 @@ export function DashboardPage() {
       <div class="welcome-banner">
         <div class="welcome-text">
           <div class="welcome-greeting">${getGreeting()} · ${formatDate()}</div>
-          <h1 class="welcome-title">Hello, ${currentUser.name.split(' ')[0]}! 👋</h1>
+          <h1 class="welcome-title">Hello, ${escapeHtml((authService.currentUser?.name || 'Student').split(' ')[0])}! 👋</h1>
           <p class="welcome-subtitle">
             You have <strong style="color:#fff">${s.pending} pending tasks</strong> (${s.completed} completed)
             and studied <strong style="color:#fff">${studyStats.weekHours}h</strong> this week.
