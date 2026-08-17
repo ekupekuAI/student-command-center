@@ -128,17 +128,17 @@ export function AdminPage() {
   }
 
   const actions = {
-    approve: (id) => () => run(() => adminService.approve(id), 'Account approved.'),
-    reject: (id) => () => run(() => adminService.reject(id), 'Account rejected.'),
-    deleteUser: (id, name) => () => {
-      if (window.confirm(`Permanently delete "${name}" and all of their data?`)) {
-        run(() => adminService.deleteUser(id), 'Account deleted.');
+    approve: (u) => () => run(() => adminService.approve(u.id), 'Account approved.'),
+    reject: (u) => () => run(() => adminService.reject(u.id), 'Account rejected.'),
+    deleteUser: (u) => () => {
+      if (window.confirm(`Permanently delete "${u.name}" and all of their data?`)) {
+        run(() => adminService.deleteUser(u.id), 'Account deleted.');
       }
     },
-    resetPassword: (id) => () => {
+    resetPassword: (u) => () => {
       const next = window.prompt('New password (minimum 8 characters):');
       if (!next) return;
-      run(() => adminService.resetPassword(id, next), 'Password reset. The user must sign in again.');
+      run(() => adminService.resetPassword(u.id, next), 'Password reset. The user must sign in again.');
     },
     editUser: (u) => () => {
       const name = window.prompt('Full name:', u.name);
@@ -147,10 +147,10 @@ export function AdminPage() {
       if (email === null || !email.trim()) return;
       run(() => adminService.updateUser(u.id, { name: name.trim(), email: email.trim() }), 'User updated.');
     },
-    setRole: (id) => (evt) => {
+    setRole: (u) => (evt) => {
       const role = evt.target.value;
       if (!role) return;
-      run(() => adminService.setRole(id, role), `Role set to ${ROLE_LABEL[role] || role}.`);
+      run(() => adminService.setRole(u.id, role), `Role set to ${ROLE_LABEL[role] || role}.`);
     },
   };
 
@@ -366,7 +366,8 @@ export function AdminPage() {
     });
 
     container.querySelectorAll('[data-role]').forEach((select) => {
-      select.addEventListener('change', actions.setRole(select.dataset.role));
+      const user = users.find((u) => u.id === select.dataset.role);
+      if (user) select.addEventListener('change', actions.setRole(user));
     });
   }
 

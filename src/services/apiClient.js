@@ -176,9 +176,9 @@ export async function request(method, path, options = {}) {
   }
 
   if (!response.ok) {
-    setOffline(true);
-    // An expired/revoked token on a protected endpoint: clear the session and
-    // let the app bounce to the auth screen.
+    // A server error (4xx/5xx) means the server IS reachable, so never mark
+    // the app offline here — that banner is reserved for real connectivity
+    // failures (fetch throwing / timeout) below.
     if (response.status === 401 && !path.startsWith(AUTH_PREFIX) && !skipAuth) {
       tokenStore.clear();
       window.dispatchEvent(new CustomEvent('scc:unauthorized'));
