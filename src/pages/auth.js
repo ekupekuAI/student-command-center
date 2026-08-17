@@ -65,7 +65,7 @@ function buildForm({ mode, onSuccess, onRegistered }) {
         <label for="auth-name">Full name</label>
         <div class="auth-input-wrap">
           ${icons.profile(16)}
-          <input id="auth-name" name="name" type="text" autocomplete="name" placeholder="Alex Johnson" required />
+          <input id="auth-name" name="name" type="text" autocomplete="name" placeholder="Your name" required />
         </div>
       </div>
       `}
