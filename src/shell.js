@@ -451,6 +451,7 @@ export function createShell() {
 
   updateMusicUI();
   musicService.armAutoresume(updateMusicUI);
+  musicService.onChange(updateMusicUI);
 
   return {
     outlet: main,

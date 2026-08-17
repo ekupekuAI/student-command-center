@@ -47,10 +47,30 @@ class MusicService {
     this._audio = null;
     this._autoresumeArmed = false;
     this._onGesture = null;
+    this._subs = new Set();
   }
 
+  /** Report the ACTUAL playback state (the element, when it exists, is the truth). */
   getState() {
-    return { playing: this._playing, muted: this._muted, volume: this._volume };
+    const a = this._audio;
+    return {
+      playing: !!a && !a.paused && !a.ended,
+      muted: this._muted,
+      volume: this._volume,
+    };
+  }
+
+  /** Subscribe to state changes (fired on play/pause/mute/volume/error). */
+  onChange(fn) {
+    this._subs.add(fn);
+    return () => this._subs.delete(fn);
+  }
+
+  _notify() {
+    const state = this.getState();
+    this._subs.forEach((fn) => {
+      try { fn(state); } catch { /* ignore subscriber errors */ }
+    });
   }
 
   _ensureAudio() {
@@ -60,9 +80,19 @@ class MusicService {
     audio.loop = true;
     audio.preload = 'none';
     audio.volume = this._muted ? 0 : this._volume;
+    // Attach to the DOM: detached <audio> elements can fail to produce sound on
+    // iOS Safari / some Android browsers. Hidden, never visible.
+    audio.style.position = 'absolute';
+    audio.style.left = '-9999px';
+    audio.style.visibility = 'hidden';
+    audio.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(audio);
+    audio.addEventListener('playing', () => this._notify());
+    audio.addEventListener('pause', () => this._notify());
     audio.addEventListener('error', () => {
       this._playing = false;
       writePref(STORAGE_KEYS.playing, false);
+      this._notify();
     });
     this._audio = audio;
     return audio;
@@ -75,6 +105,7 @@ class MusicService {
     this.disarmAutoresume();
     try {
       await this._ensureAudio().play();
+      this._notify();
       return true;
     } catch (err) {
       if (err && err.name === 'NotAllowedError') {
@@ -83,10 +114,12 @@ class MusicService {
         this._playing = false;
         writePref(STORAGE_KEYS.playing, true);
         this.armAutoresume();
+        this._notify();
         return false;
       }
       this._playing = false;
       writePref(STORAGE_KEYS.playing, false);
+      this._notify();
       return false;
     }
   }
@@ -96,11 +129,14 @@ class MusicService {
     writePref(STORAGE_KEYS.playing, false);
     this.disarmAutoresume();
     if (this._audio) this._audio.pause();
+    this._notify();
   }
 
-  /** Play/pause toggle. Returns true when the track is now playing. */
+  /** Play/pause toggle, based on what the element is ACTUALLY doing. */
   toggle() {
-    if (this._playing) {
+    const a = this._audio;
+    const actuallyPlaying = !!a && !a.paused && !a.ended;
+    if (actuallyPlaying) {
       this.pause();
       return false;
     }
@@ -113,12 +149,14 @@ class MusicService {
     writePref(STORAGE_KEYS.volume, this._volume);
     if (this._audio && !this._muted) this._audio.volume = this._volume;
     if (this._muted) this.setMuted(false);
+    this._notify();
   }
 
   setMuted(muted) {
     this._muted = !!muted;
     writePref(STORAGE_KEYS.muted, this._muted);
     if (this._audio) this._audio.volume = this._muted ? 0 : this._volume;
+    this._notify();
   }
 
   toggleMute() {
@@ -134,6 +172,7 @@ class MusicService {
       this._audio.pause();
       this._audio.currentTime = 0;
     }
+    this._notify();
   }
 
   /**
