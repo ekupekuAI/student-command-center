@@ -124,3 +124,29 @@ class AdminUserUpdate(BaseModel):
 
 class AdminResetPasswordRequest(BaseModel):
     new_password: str = Field(min_length=PASSWORD_MIN, max_length=128)
+
+
+class AdminActivityItem(BaseModel):
+    """One entry in the admin's activity stream."""
+
+    action: str
+    detail: str
+    created_at: datetime
+
+
+class AdminCounts(BaseModel):
+    total: int
+    pending: int
+    approved: int
+    rejected: int
+    admins: int
+
+
+class AdminOverview(BaseModel):
+    """Admin console summary — login tracking, account counts, recent actions."""
+
+    login_count: int
+    last_login_at: datetime | None
+    created_at: datetime
+    counts: AdminCounts
+    activity: list[AdminActivityItem]

@@ -38,6 +38,10 @@ let router = null;
 function mountApp() {
   clearApp();
 
+  const user = authService.currentUser;
+  const isAdminRole = user && (user.role === 'admin' || user.role === 'master_admin');
+  const isMaster = user && user.role === 'master_admin';
+
   shell = createShell();
   router = new Router({
     outlet: shell.outlet,
@@ -46,18 +50,26 @@ function mountApp() {
     },
   });
 
-  router
-    .register('#/dashboard', DashboardPage)
-    .register('#/subjects',  SubjectsPage)
-    .register('#/tasks',     TasksPage)
-    .register('#/study',     StudyPage)
-    .register('#/notes',     NotesPage)
-    .register('#/analytics', AnalyticsPage)
-    .register('#/ai',        AIPage)
-    .register('#/profile',   ProfilePage)
-    .register('#/settings',  SettingsPage)
-    .register('#/admin',        () => AdminPage({ master: false }))
-    .register('#/master-admin', () => AdminPage({ master: true }));
+  if (isAdminRole) {
+    // Admins only get the management console — no student tabs or pages.
+    router
+      .register('#/dashboard', () => AdminPage({ master: isMaster }))
+      .register('#/admin', () => AdminPage({ master: false }))
+      .register('#/master-admin', () => AdminPage({ master: true }));
+  } else {
+    router
+      .register('#/dashboard', DashboardPage)
+      .register('#/subjects',  SubjectsPage)
+      .register('#/tasks',     TasksPage)
+      .register('#/study',     StudyPage)
+      .register('#/notes',     NotesPage)
+      .register('#/analytics', AnalyticsPage)
+      .register('#/ai',        AIPage)
+      .register('#/profile',   ProfilePage)
+      .register('#/settings',  SettingsPage)
+      .register('#/admin',        () => AdminPage({ master: false }))
+      .register('#/master-admin', () => AdminPage({ master: true }));
+  }
 
   router.start();
 

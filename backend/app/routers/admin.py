@@ -26,7 +26,7 @@ from app.models.user import (
     STATUS_REJECTED,
     User,
 )
-from app.schemas.auth import AdminResetPasswordRequest, AdminUserUpdate, UserRead
+from app.schemas.auth import AdminOverview, AdminResetPasswordRequest, AdminUserUpdate, UserRead
 from app.services import auth_service
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -56,6 +56,15 @@ def _guard_target(actor: User, target: User) -> None:
         )
 
 
+@router.get("/overview", response_model=AdminOverview)
+def admin_overview(
+    current_user: AdminUser,
+    db: Session = Depends(get_db),
+) -> dict:
+    """Admin console summary: login count, last login, account counts, recent actions."""
+    return auth_service.compute_admin_overview(db, current_user)
+
+
 @router.get("/users", response_model=list[UserRead])
 def list_users(
     current_user: AdminUser,
@@ -83,6 +92,7 @@ def approve_user(
         return target
     target.account_status = STATUS_APPROVED
     db.commit()
+    auth_service.log_admin_action(db, current_user, "approve", f"Approved {target.email}")
     db.refresh(target)
     return target
 
@@ -101,6 +111,7 @@ def reject_user(
     target.account_status = STATUS_REJECTED
     target.token_version += 1
     db.commit()
+    auth_service.log_admin_action(db, current_user, "reject", f"Rejected {target.email}")
     db.refresh(target)
     return target
 
@@ -138,6 +149,7 @@ def update_user(
         target.token_version += 1
 
     db.commit()
+    auth_service.log_admin_action(db, current_user, "update", f"Updated {target.email}")
     db.refresh(target)
     return target
 
@@ -155,6 +167,9 @@ def reset_password(
     target.password_hash = auth_service.hash_password(payload.new_password)
     target.token_version += 1
     db.commit()
+    auth_service.log_admin_action(
+        db, current_user, "reset_password", f"Reset password for {target.email}"
+    )
 
 
 @router.delete("/users/{user_id}", status_code=204)
@@ -168,8 +183,12 @@ def delete_user(
     _guard_target(current_user, target)
     if target.id == current_user.id:
         raise HTTPException(status_code=400, detail="You cannot delete your own account.")
+    target_email = target.email
     db.delete(target)
     db.commit()
+    auth_service.log_admin_action(
+        db, current_user, "delete", f"Deleted {target_email}"
+    )
 
 
 # ── Master-admin-only: role management ──────────────────────────
@@ -197,5 +216,11 @@ def set_role(
         )
     target.role = role
     db.commit()
+    auth_service.log_admin_action(
+        db,
+        current_user,
+        "set_role",
+        f"Set {target.email} role to {role}",
+    )
     db.refresh(target)
     return target

@@ -141,11 +141,12 @@ export function createShell() {
 
   const allNavItems = [];
   const currentRole = authService.currentUser && authService.currentUser.role;
+  const isAdminRole = currentRole === 'admin' || currentRole === 'master_admin';
+  const isMaster = currentRole === 'master_admin';
 
   const canSeeItem = (item) => {
-    if (item.adminOnly) return currentRole === 'admin' || currentRole === 'master_admin';
-    if (item.masterOnly) return currentRole === 'master_admin';
-    return true;
+    if (isAdminRole) return item.adminOnly || (item.masterOnly && isMaster);
+    return !item.adminOnly && !item.masterOnly;
   };
 
   for (const section of NAV_SECTIONS) {
@@ -228,19 +229,23 @@ export function createShell() {
       ${icons.menu(20)}
     </button>
     <div class="header-breadcrumb">
-      <span class="breadcrumb-page" id="breadcrumbPage">Dashboard</span>
+      <span class="breadcrumb-page" id="breadcrumbPage">${isAdminRole ? (isMaster ? 'Master Admin' : 'Admin') : 'Dashboard'}</span>
     </div>
     <div class="header-actions">
+      ${isAdminRole ? '' : `
       <div class="header-search" role="search">
         ${icons.search(15)}
         <input type="search" placeholder="Search tasks, subjects..." aria-label="Search" id="globalSearch" />
       </div>
+      `}
       <button class="icon-btn" id="themeToggleBtn" aria-label="Toggle theme" title="Toggle dark/light mode">
         ${icons.sun(18)}
       </button>
+      ${isAdminRole ? '' : `
       <button class="icon-btn" id="notifBtn" aria-label="Go to tasks" title="Go to tasks" onclick="window.location.hash='#/tasks'">
         ${icons.bell(18)}
       </button>
+      `}
       <div class="header-avatar" role="button" tabindex="0" aria-label="User menu" id="headerAvatar">
         ${userInitials}
       </div>
@@ -347,7 +352,7 @@ export function createShell() {
 
   // ── Active nav state update ────────────────────────────────
   const PAGE_LABELS = {
-    '#/dashboard': 'Dashboard',
+    '#/dashboard': isAdminRole ? (isMaster ? 'Master Admin' : 'Admin') : 'Dashboard',
     '#/subjects':  'Subjects',
     '#/tasks':     'Tasks & Assignments',
     '#/study':     'Study Sessions',

@@ -8,6 +8,7 @@
 import { apiClient } from './apiClient.js';
 
 export const adminService = {
+  getOverview: () => apiClient.get('/admin/overview'),
   listUsers: (status) => apiClient.get(`/admin/users${status ? `?status=${status}` : ''}`),
   approve: (userId) => apiClient.post(`/admin/users/${userId}/approve`),
   reject: (userId) => apiClient.post(`/admin/users/${userId}/reject`),

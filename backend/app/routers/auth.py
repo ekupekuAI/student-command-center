@@ -66,6 +66,7 @@ def login(
         raise HTTPException(
             status_code=403, detail=auth_service.account_status_message(user.account_status)
         )
+    auth_service.record_login(db, user)
     return AuthResponse(access_token=auth_service.issue_token(user), user=user)
 
 

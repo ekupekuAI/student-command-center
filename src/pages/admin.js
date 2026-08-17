@@ -1,10 +1,12 @@
 /**
- * admin.js — Admin & Master Admin pages
+ * admin.js — Admin & Master Admin console
  *
- * Admin page (#/admin): approve/reject pending accounts and manage all users
- * (edit, reset password, delete). Master Admin page (#/master-admin): adds
- * role management (promote/demote). Access is enforced by the backend; the
- * page also shows an access-denied state for non-admins.
+ * Admins land here instead of the student dashboard. The console is scoped to
+ * user management only: approve/reject pending accounts, edit, reset passwords,
+ * delete users, and (for master admins) manage roles. It also surfaces the
+ * admin's own sign-in history (login count / last login) and recent actions.
+ * Access is enforced by the backend; the page also shows an access-denied
+ * state for non-admins.
  */
 
 import { icons } from '../icons.js';
@@ -27,28 +29,39 @@ function formatDate(iso) {
   }
 }
 
-const STATUS_LABEL = {
-  pending: 'Pending',
-  approved: 'Approved',
-  rejected: 'Rejected',
-};
+function formatDateTime(iso) {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    return `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}, ${d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
+  } catch {
+    return '—';
+  }
+}
 
-const STATUS_CLASS = {
-  pending: 'badge-warning',
-  approved: 'badge-success',
-  rejected: 'badge-error',
-};
+function timeAgo(iso) {
+  if (!iso) return '';
+  const minutes = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return days === 1 ? 'yesterday' : `${days}d ago`;
+}
 
-const ROLE_LABEL = {
-  user: 'User',
-  admin: 'Admin',
-  master_admin: 'Master',
-};
+const STATUS_LABEL = { pending: 'Pending', approved: 'Approved', rejected: 'Rejected' };
+const STATUS_CLASS = { pending: 'badge-warning', approved: 'badge-success', rejected: 'badge-error' };
+const ROLE_LABEL = { user: 'User', admin: 'Admin', master_admin: 'Master' };
+const ROLE_CLASS = { user: 'badge-neutral', admin: 'badge-brand', master_admin: 'badge-warning' };
 
-const ROLE_CLASS = {
-  user: 'badge-neutral',
-  admin: 'badge-brand',
-  master_admin: 'badge-warning',
+const ACTION_META = {
+  approve:        { label: 'Approved',    accent: 'green' },
+  reject:         { label: 'Rejected',    accent: 'red' },
+  update:         { label: 'Updated',     accent: 'blue' },
+  reset_password: { label: 'Password reset', accent: 'yellow' },
+  delete:         { label: 'Deleted',     accent: 'red' },
+  set_role:       { label: 'Role changed', accent: 'violet' },
 };
 
 export function AdminPage({ master = false } = {}) {
@@ -78,26 +91,28 @@ export function AdminPage({ master = false } = {}) {
     return container;
   }
 
+  const isMaster = isMasterAdmin(me);
+  let overview = null;
   let users = [];
   let pending = [];
   let loading = true;
   let error = '';
-
-  const unsub = null;
 
   async function load() {
     loading = true;
     error = '';
     render();
     try {
-      const [all, pendingList] = await Promise.all([
+      const [ov, all, pendingList] = await Promise.all([
+        adminService.getOverview(),
         adminService.listUsers(),
         adminService.listUsers('pending'),
       ]);
+      overview = ov || null;
       users = all || [];
       pending = pendingList || [];
     } catch (err) {
-      error = (err && err.message) || 'Could not load users.';
+      error = (err && err.message) || 'Could not load the admin console.';
     } finally {
       loading = false;
       render();
@@ -149,9 +164,21 @@ export function AdminPage({ master = false } = {}) {
     return `<span class="badge ${ROLE_CLASS[role] || 'badge-neutral'}">${ROLE_LABEL[role] || role}</span>`;
   }
 
+  function statCard(icon, accent, value, label) {
+    return `
+      <div class="stat-card">
+        <div class="stat-icon-wrap accent-bg ${accent}">${icon}</div>
+        <div class="stat-body">
+          <div class="stat-value">${value}</div>
+          <div class="stat-label">${label}</div>
+        </div>
+      </div>
+    `;
+  }
+
   function userRow(u) {
     const isMe = me && me.id === u.id;
-    const showRoleControl = master && u.role !== 'master_admin';
+    const showRoleControl = isMaster && u.role !== 'master_admin';
     const canManageThis = !(u.role === 'master_admin' && u.id !== me.id);
 
     return `
@@ -187,20 +214,95 @@ export function AdminPage({ master = false } = {}) {
     `;
   }
 
+  function overviewHtml() {
+    if (!overview) return '';
+    const c = overview.counts || {};
+    const roleLabel = isMaster ? 'Master Admin' : 'Admin';
+    const loginWord = overview.login_count === 1 ? 'login' : 'logins';
+    const lastLogin = overview.last_login_at ? formatDateTime(overview.last_login_at) : 'Never';
+    const memberSince = me ? formatDate(me.created_at || overview.created_at) : '—';
+
+    const activityRows = (overview.activity || []).map((a) => {
+      const meta = ACTION_META[a.action] || { label: a.action, accent: 'blue' };
+      return `
+        <div class="admin-activity-row">
+          <span class="admin-activity-dot accent-bg ${meta.accent}" aria-hidden="true"></span>
+          <div class="admin-activity-body">
+            <strong>${esc(meta.label)}</strong>
+            <small>${esc(a.detail)}</small>
+          </div>
+          <span class="admin-activity-time">${timeAgo(a.created_at)}</span>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <section class="admin-hero">
+        <div class="admin-hero-text">
+          <div class="admin-hero-eyebrow">Management console</div>
+          <h3>Welcome back, ${esc(me ? me.name.split(' ')[0] : 'Admin')}</h3>
+          <p>Approve new accounts and manage every user on the Command Center.</p>
+        </div>
+        <div class="admin-hero-badges">
+          <span class="badge badge-brand">${roleLabel}</span>
+          <span class="admin-hero-stat">${overview.login_count} ${loginWord}</span>
+          <span class="admin-hero-stat">Last login ${lastLogin}</span>
+        </div>
+      </section>
+
+      <div class="admin-stats">
+        ${statCard(icons.user(22), 'accent-violet', c.total ?? '—', 'Total users')}
+        ${statCard(icons.clock(22), 'accent-yellow', c.pending ?? '—', 'Pending')}
+        ${statCard(icons.check(22), 'accent-green', c.approved ?? '—', 'Approved')}
+        ${statCard(icons.x(22), 'accent-red', c.rejected ?? '—', 'Rejected')}
+        ${statCard(icons.zap(22), 'accent-blue', c.admins ?? '—', 'Admins')}
+      </div>
+
+      <section class="card admin-activity" style="margin-bottom: var(--space-8)">
+        <div class="card-header">
+          <div>
+            <div class="card-title">My activity</div>
+            <div class="card-subtitle">Your sign-in history and recent actions</div>
+          </div>
+        </div>
+        <div class="admin-activity-list">
+          <div class="admin-activity-row">
+            <span class="admin-activity-dot accent-bg accent-violet" aria-hidden="true"></span>
+            <div class="admin-activity-body">
+              <strong>Total logins</strong>
+              <small>Signed in ${overview.login_count} time${overview.login_count === 1 ? '' : 's'}</small>
+            </div>
+            <span class="admin-activity-time">${lastLogin}</span>
+          </div>
+          <div class="admin-activity-row">
+            <span class="admin-activity-dot accent-bg accent-blue" aria-hidden="true"></span>
+            <div class="admin-activity-body">
+              <strong>Member since</strong>
+              <small>${memberSince}</small>
+            </div>
+          </div>
+          ${activityRows || `<div class="empty-state" style="padding: var(--space-5)">
+            <p>No actions taken yet — approve or manage accounts to see activity here.</p>
+          </div>`}
+        </div>
+      </section>
+    `;
+  }
+
   function render() {
-    const title = master ? 'Master Admin' : 'Admin';
-    const subtitle = master
-      ? 'Approve accounts and manage every user, including admin roles.'
-      : 'Approve new accounts and manage all users.';
+    const title = isMaster ? 'Master Admin' : 'Admin';
+    const subtitle = isMaster
+      ? 'Full control: manage users, roles, and approvals.'
+      : 'Manage users: approve, reject, edit, reset, and remove accounts.';
 
     let body = '';
     if (loading) {
-      body = `<div class="empty-state"><p>Loading users…</p></div>`;
+      body = `<div class="empty-state"><p>Loading the admin console…</p></div>`;
     } else if (error) {
       body = `
         <div class="empty-state">
           <div class="empty-state-icon">${icons.x(30)}</div>
-          <h4>Could not load users</h4>
+          <h4>Could not load the admin console</h4>
           <p>${esc(error)}</p>
           <button class="btn btn-secondary btn-sm" data-retry>Try again</button>
         </div>
@@ -242,7 +344,7 @@ export function AdminPage({ master = false } = {}) {
         </section>
       `;
 
-      body = `${pendingSection}${allSection}`;
+      body = `${overviewHtml()}${pendingSection}${allSection}`;
     }
 
     container.innerHTML = `
@@ -276,9 +378,7 @@ export function AdminPage({ master = false } = {}) {
 
   load();
 
-  container._destroy = () => {
-    if (unsub) unsub();
-  };
+  container._destroy = () => {};
 
   return container;
 }

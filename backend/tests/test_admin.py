@@ -240,3 +240,69 @@ def test_ensure_admin_noop_without_config(db_session, monkeypatch):
     monkeypatch.setattr(settings, "admin_email", "")
     monkeypatch.setattr(settings, "admin_password", "")
     assert ensure_admin(db_session) is None
+
+
+# ── Login tracking & admin overview ─────────────────────────────
+
+
+def test_login_count_increments(client, db_session):
+    user = _make_user(db_session, email="counter@example.com", status="approved")
+    assert user.login_count == 0
+    assert user.last_login_at is None
+
+    _login(client, user.email)
+    _login(client, user.email)
+    db_session.refresh(user)
+    assert user.login_count == 2
+    assert user.last_login_at is not None
+
+
+def test_login_count_does_not_increment_for_failed_login(client, db_session):
+    user = _make_user(db_session, email="counter@example.com", status="approved")
+    response = client.post(
+        "/api/auth/login",
+        json={"email": user.email, "password": "wrong-password"},
+    )
+    assert response.status_code == 401
+    db_session.refresh(user)
+    assert user.login_count == 0
+
+
+def test_admin_overview_reports_logins_and_counts(client, db_session):
+    admin = _make_user(db_session, email="boss@example.com", role="admin")
+    headers = _login(client, admin.email)
+    _make_user(db_session, email="pending@example.com", status="pending")
+    _make_user(db_session, email="approved@example.com", status="approved")
+    _make_user(db_session, email="rejected@example.com", status="rejected")
+
+    overview = client.get("/api/admin/overview", headers=headers)
+    assert overview.status_code == 200
+    data = overview.json()
+    assert data["login_count"] == 1
+    assert data["last_login_at"] is not None
+    # fixture user (test@example.com, approved) + admin + 3 status users
+    assert data["counts"]["total"] == 5
+    assert data["counts"]["pending"] == 1
+    assert data["counts"]["approved"] == 3
+    assert data["counts"]["rejected"] == 1
+    assert data["counts"]["admins"] == 1
+
+
+def test_admin_actions_are_logged_in_overview(client, db_session):
+    admin = _make_user(db_session, email="boss@example.com", role="admin")
+    headers = _login(client, admin.email)
+    created = _register(client, "student@example.com")
+    user_id = created.json()["user"]["id"]
+    client.post(f"/api/admin/users/{user_id}/approve", headers=headers)
+    client.post(f"/api/admin/users/{user_id}/reject", headers=headers)
+
+    overview = client.get("/api/admin/overview", headers=headers)
+    data = overview.json()
+    actions = [a["action"] for a in data["activity"]]
+    assert "approve" in actions
+    assert "reject" in actions
+    assert any("student@example.com" in a["detail"] for a in data["activity"])
+
+
+def test_admin_overview_forbidden_for_regular_user(client, auth_headers):
+    assert client.get("/api/admin/overview", headers=auth_headers).status_code == 403

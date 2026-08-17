@@ -46,6 +46,12 @@ class User(Base):
     )
     # Bumped on logout so previously-issued JWTs become invalid server-side.
     token_version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # Total successful logins (used on the admin console).
+    login_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="0", default=0
+    )
+    # Timestamp of the most recent successful login.
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

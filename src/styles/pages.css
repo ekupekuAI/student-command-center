@@ -232,7 +232,7 @@
 
 .admin-row {
   display: grid;
-  grid-template-columns: minmax(220px, 2fr) 90px 110px 130px minmax(280px, 2fr);
+  grid-template-columns: minmax(200px, 1.4fr) 100px 120px 120px minmax(0, 1.6fr);
   gap: var(--space-3);
   align-items: center;
   padding: var(--space-3) var(--space-4);
@@ -327,6 +327,152 @@
   font-size: var(--text-xs);
 }
 
+/* ── Admin hero ────────────────────────────────────────────── */
+.admin-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-2xl);
+  background: linear-gradient(135deg,
+    hsl(245, 68%, 30%) 0%,
+    var(--color-brand-600) 45%,
+    hsl(275, 70%, 46%) 100%);
+  padding: var(--space-7) var(--space-8);
+  margin-bottom: var(--space-8);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  box-shadow: 0 10px 32px hsla(245, 60%, 30%, 0.35);
+}
+
+.admin-hero::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  right: -8%;
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  background: hsla(0, 0%, 100%, 0.08);
+  pointer-events: none;
+}
+
+.admin-hero-text {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+  min-width: 0;
+}
+
+.admin-hero-eyebrow {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: hsla(0, 0%, 100%, 0.72);
+  margin-bottom: var(--space-2);
+}
+
+.admin-hero-text h3 {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  margin: 0 0 var(--space-2);
+}
+
+.admin-hero-text p {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: hsla(0, 0%, 100%, 0.82);
+}
+
+.admin-hero-badges {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 420px;
+}
+
+.admin-hero-badges .badge { background: hsla(0, 0%, 100%, 0.16); color: #fff; }
+
+.admin-hero-stat {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: hsla(0, 0%, 100%, 0.9);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid hsla(0, 0%, 100%, 0.25);
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+/* ── Admin stats ───────────────────────────────────────────── */
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+/* ── Admin activity ────────────────────────────────────────── */
+.admin-activity-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-activity-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.admin-activity-row:first-child { border-top: 0; }
+
+.admin-activity-dot {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+.admin-activity-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-activity-body strong {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+.admin-activity-body small {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-activity-time {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 1100px) {
+  .admin-row {
+    grid-template-columns: minmax(180px, 1.2fr) 90px 110px 110px minmax(0, 1.4fr);
+  }
+}
+
 @media (max-width: 900px) {
   .admin-row {
     grid-template-columns: 1fr auto;
@@ -334,6 +480,9 @@
   }
   .admin-cell { font-size: var(--text-xs); }
   .admin-actions { justify-content: flex-start; grid-column: 1 / -1; }
+  .admin-hero { flex-direction: column; align-items: flex-start; padding: var(--space-6); }
+  .admin-hero-badges { justify-content: flex-start; max-width: none; }
+  .admin-hero-text h3 { font-size: var(--text-xl); }
 }
 
 @media (prefers-reduced-motion: reduce) {

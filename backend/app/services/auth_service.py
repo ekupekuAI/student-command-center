@@ -15,11 +15,13 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.security import create_access_token, hash_password, verify_password
+from app.models.activity import Activity
 from app.models.note import Note
 from app.models.study_session import StudySession
 from app.models.subject import Subject
 from app.models.task import Task
 from app.models.user import (
+    ROLE_ADMIN,
     ROLE_MASTER_ADMIN,
     STATUS_APPROVED,
     STATUS_PENDING,
@@ -122,6 +124,68 @@ def logout(db: Session, user: User) -> None:
     """Revoke all previously issued tokens for this user."""
     user.token_version += 1
     db.commit()
+
+
+def record_login(db: Session, user: User) -> None:
+    """Bump the login counter and stamp the last-login timestamp."""
+    user.login_count = (user.login_count or 0) + 1
+    user.last_login_at = datetime.now(timezone.utc)
+    db.commit()
+
+
+def log_admin_action(
+    db: Session,
+    admin: User,
+    action: str,
+    detail: str,
+    accent: str = "green",
+) -> None:
+    """Append an admin action to the admin's activity stream."""
+    db.add(
+        Activity(
+            user_id=admin.id,
+            type="admin_action",
+            label=action,
+            text=detail,
+            accent=accent,
+        )
+    )
+    db.commit()
+
+
+def compute_admin_overview(db: Session, admin: User) -> dict:
+    """Admin console summary: login tracking, account counts, recent actions."""
+    counts = dict(
+        db.execute(
+            select(User.account_status, func.count()).group_by(User.account_status)
+        ).all()
+    )
+    total = db.scalar(select(func.count()).select_from(User)) or 0
+    admins = db.scalar(
+        select(func.count()).where(User.role.in_((ROLE_ADMIN, ROLE_MASTER_ADMIN)))
+    ) or 0
+    recent = db.scalars(
+        select(Activity)
+        .where(Activity.user_id == admin.id)
+        .order_by(Activity.timestamp.desc())
+        .limit(20)
+    ).all()
+    return {
+        "login_count": admin.login_count or 0,
+        "last_login_at": admin.last_login_at,
+        "created_at": admin.created_at,
+        "counts": {
+            "total": total,
+            "pending": counts.get(STATUS_PENDING, 0),
+            "approved": counts.get(STATUS_APPROVED, 0),
+            "rejected": counts.get("rejected", 0),
+            "admins": admins,
+        },
+        "activity": [
+            {"action": row.label, "detail": row.text, "created_at": row.timestamp}
+            for row in recent
+        ],
+    }
 
 
 def update_profile(db: Session, user: User, data: dict) -> User:
