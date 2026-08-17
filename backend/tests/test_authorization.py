@@ -19,6 +19,7 @@ def _second_user(db_session) -> tuple[User, dict]:
         name="Other User",
         email="other@example.com",
         password_hash=hash_password("other-secret-pass"),
+        account_status="approved",
     )
     db_session.add(other)
     db_session.commit()

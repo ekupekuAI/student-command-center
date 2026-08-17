@@ -12,3 +12,4 @@ export { AnalyticsPage } from './analytics.js';
 export { AIPage }        from './ai.js';
 export { ProfilePage }   from './profile.js';
 export { SettingsPage }  from './settings.js';
+export { AdminPage }     from './admin.js';

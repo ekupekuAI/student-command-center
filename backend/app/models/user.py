@@ -18,6 +18,17 @@ def _uuid() -> str:
     return uuid.uuid4().hex
 
 
+# Roles, ordered by privilege.
+ROLE_USER = "user"
+ROLE_ADMIN = "admin"
+ROLE_MASTER_ADMIN = "master_admin"
+
+# Account approval gate for new registrations.
+STATUS_PENDING = "pending"
+STATUS_APPROVED = "approved"
+STATUS_REJECTED = "rejected"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -26,6 +37,13 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # RBAC role: ROLE_USER / ROLE_ADMIN / ROLE_MASTER_ADMIN.
+    role: Mapped[str] = mapped_column(String(20), nullable=False, server_default=ROLE_USER)
+    # Approval gate: STATUS_PENDING / STATUS_APPROVED / STATUS_REJECTED.
+    # New registrations are created as pending; only approved accounts can log in.
+    account_status: Mapped[str] = mapped_column(
+        String(20), nullable=False, server_default=STATUS_PENDING
+    )
     # Bumped on logout so previously-issued JWTs become invalid server-side.
     token_version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(

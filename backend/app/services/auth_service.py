@@ -13,18 +13,36 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models.note import Note
 from app.models.study_session import StudySession
 from app.models.subject import Subject
 from app.models.task import Task
-from app.models.user import User
+from app.models.user import (
+    ROLE_MASTER_ADMIN,
+    STATUS_APPROVED,
+    STATUS_PENDING,
+    User,
+)
 
 logger = logging.getLogger(__name__)
 
 
 def normalize_email(email: str) -> str:
     return email.strip().lower()
+
+
+def account_status_message(status: str) -> str:
+    """Public, non-sensitive explanation for a user's account status."""
+    if status == STATUS_PENDING:
+        return (
+            "Your account is pending admin approval. "
+            "You will be able to sign in once an admin approves it."
+        )
+    if status == "rejected":
+        return "Your account was rejected by an admin. Please contact support."
+    return "Your account is not active yet."
 
 
 class AuthServiceError(Exception):
@@ -41,13 +59,48 @@ def register(db: Session, name: str, email: str, password: str) -> User:
     existing = db.scalar(select(User).where(User.email == normalized))
     if existing is not None:
         raise AuthServiceError("An account with this email already exists.", status_code=409)
-    user = User(name=name, email=normalized, password_hash=hash_password(password))
+    # New accounts start in the pending queue and cannot log in until an
+    # admin approves them.
+    user = User(
+        name=name,
+        email=normalized,
+        password_hash=hash_password(password),
+        account_status=STATUS_PENDING,
+    )
     db.add(user)
     try:
         db.commit()
     except IntegrityError:
         db.rollback()
         raise AuthServiceError("An account with this email already exists.", status_code=409)
+    db.refresh(user)
+    return user
+
+
+def ensure_admin(db: Session) -> User | None:
+    """Idempotently create (or refresh) the master admin from configured env
+    credentials. No-op unless ADMIN_EMAIL and ADMIN_PASSWORD are set. Never
+    overwrites an existing admin's password — only role/status/name."""
+    email = settings.admin_email
+    password = settings.admin_password
+    if not (email and password):
+        return None
+    normalized = normalize_email(email)
+    user = db.scalar(select(User).where(User.email == normalized))
+    if user is None:
+        user = User(
+            name=settings.admin_name or "Master Admin",
+            email=normalized,
+            password_hash=hash_password(password),
+            role=ROLE_MASTER_ADMIN,
+            account_status=STATUS_APPROVED,
+        )
+        db.add(user)
+    else:
+        user.role = ROLE_MASTER_ADMIN
+        user.account_status = STATUS_APPROVED
+        user.name = settings.admin_name or user.name
+    db.commit()
     db.refresh(user)
     return user
 

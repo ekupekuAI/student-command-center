@@ -14,18 +14,54 @@ def test_health(client):
     assert response.json()["status"] == "ok"
 
 
-def test_register_success(client):
+def test_register_creates_pending_account(client):
     response = client.post(
         "/api/auth/register",
         json={"name": "   Ada Lovelace  ", "email": "ADA@Example.com", "password": "supersecret1"},
     )
     assert response.status_code == 201
     body = response.json()
-    assert body["token_type"] == "bearer"
-    assert body["access_token"]
+    # New accounts are pending and receive NO token until an admin approves.
+    assert "access_token" not in body
     assert body["user"]["name"] == "Ada Lovelace"
     assert body["user"]["email"] == "ada@example.com"  # normalized
+    assert body["user"]["account_status"] == "pending"
+    assert body["message"]
     assert "password" not in body["user"]
+
+
+def test_register_pending_user_cannot_login(client):
+    client.post(
+        "/api/auth/register",
+        json={"name": "Ada", "email": "ada@example.com", "password": "supersecret1"},
+    )
+    response = client.post(
+        "/api/auth/login",
+        json={"email": "ada@example.com", "password": "supersecret1"},
+    )
+    assert response.status_code == 403
+    assert "pending admin approval" in response.json()["detail"]
+
+
+def test_register_rejected_user_cannot_login(client, db_session):
+    from app.core.security import hash_password
+    from app.models.user import STATUS_REJECTED, User
+
+    rejected = User(
+        name="Nope",
+        email="rejected@example.com",
+        password_hash=hash_password("supersecret1"),
+        account_status=STATUS_REJECTED,
+    )
+    db_session.add(rejected)
+    db_session.commit()
+
+    response = client.post(
+        "/api/auth/login",
+        json={"email": "rejected@example.com", "password": "supersecret1"},
+    )
+    assert response.status_code == 403
+    assert "rejected by an admin" in response.json()["detail"]
 
 
 def test_register_duplicate_email_409(client):

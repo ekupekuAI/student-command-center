@@ -50,7 +50,7 @@ function clearError(input) {
   if (field) field.querySelector('.auth-field-error')?.remove();
 }
 
-function buildForm({ mode, onSuccess }) {
+function buildForm({ mode, onSuccess, onRegistered }) {
   const isLogin = mode === 'login';
   const card = el('div', { className: 'auth-card auth-enter', style: 'animation-delay: 90ms' });
 
@@ -155,11 +155,14 @@ function buildForm({ mode, onSuccess }) {
     try {
       if (isLogin) {
         await authService.login({ email, password });
+        showToast('Welcome back!', 'success');
+        onSuccess();
       } else {
-        await authService.register({ name, email, password });
+        const res = await authService.register({ name, email, password });
+        showToast(res.message || 'Account created — pending admin approval.', 'success');
+        // No auto-login: pending accounts are locked until an admin approves.
+        if (typeof onRegistered === 'function') onRegistered(res.user);
       }
-      showToast(isLogin ? 'Welcome back!' : 'Account created — welcome to Command Center!', 'success');
-      onSuccess();
     } catch (err) {
       showToast((err && err.message) || 'Something went wrong. Please try again.', 'error');
       submitBtn.disabled = false;
@@ -175,6 +178,38 @@ function buildForm({ mode, onSuccess }) {
 }
 
 let onSwitch = () => {};
+
+function esc(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
+/**
+ * Status card shown right after account creation. The account is locked until
+ * an admin approves it; the user signs in later (and only succeeds once the
+ * admin accepts the account).
+ */
+function buildPendingCard({ user, onSignIn }) {
+  const card = el('div', { className: 'auth-card auth-enter', style: 'animation-delay: 90ms' });
+  card.innerHTML = `
+    <div class="auth-card-head">
+      <div class="auth-status-icon" aria-hidden="true">${icons.clock(30)}</div>
+      <h2>Account created — awaiting approval</h2>
+      <p>${esc(user.email)} has been registered.</p>
+    </div>
+    <div class="auth-status-body">
+      <p>An admin needs to approve your account before you can sign in.</p>
+      <ul class="auth-status-list">
+        <li><strong>Approved</strong> — you'll be able to sign in normally.</li>
+        <li><strong>Rejected</strong> — you'll see the reason here when you try to sign in.</li>
+      </ul>
+    </div>
+    <button type="button" class="auth-submit" data-pending-signin>Go to Sign In</button>
+  `;
+  card.querySelector('[data-pending-signin]').addEventListener('click', () => onSignIn());
+  return card;
+}
 
 /**
  * Help Center — an expandable "how to sign in & get started" guide shown on
@@ -267,7 +302,19 @@ export function AuthPage({ onSuccess, initialMode = 'login' }) {
   const right = el('div', { className: 'auth-main' });
   const panel = el('div', { className: 'auth-panel' });
   panel.appendChild(el('div', { className: 'auth-mobile-brand' }, '<div class="auth-mobile-logo" aria-hidden="true">SC</div><span>Student Command Center</span>'));
-  const form = buildForm({ mode: initialMode, onSuccess });
+
+  const showPending = (user) => {
+    const pendingCard = buildPendingCard({
+      user,
+      onSignIn: () => {
+        const loginCard = buildForm({ mode: 'login', onSuccess, onRegistered: showPending });
+        panel.replaceChild(loginCard, panel.querySelector('.auth-card'));
+      },
+    });
+    panel.replaceChild(pendingCard, panel.querySelector('.auth-card'));
+  };
+
+  const form = buildForm({ mode: initialMode, onSuccess, onRegistered: showPending });
   panel.appendChild(form);
   panel.appendChild(buildHelp());
   right.appendChild(panel);

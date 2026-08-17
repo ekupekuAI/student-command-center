@@ -19,6 +19,7 @@ import {
   AIPage,
   ProfilePage,
   SettingsPage,
+  AdminPage,
 } from './pages/index.js';
 import { subjectService } from './services/subjectService.js';
 import { taskService } from './services/taskService.js';
@@ -53,7 +54,9 @@ function mountApp() {
     .register('#/analytics', AnalyticsPage)
     .register('#/ai',        AIPage)
     .register('#/profile',   ProfilePage)
-    .register('#/settings',  SettingsPage);
+    .register('#/settings',  SettingsPage)
+    .register('#/admin',        () => AdminPage({ master: false }))
+    .register('#/master-admin', () => AdminPage({ master: true }));
 
   router.start();
 

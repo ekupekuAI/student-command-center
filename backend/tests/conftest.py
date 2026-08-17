@@ -51,6 +51,7 @@ def user(db_session):
         name="Test User",
         email="test@example.com",
         password_hash=hash_password("correct-horse-battery"),
+        account_status="approved",
     )
     db_session.add(test_user)
     db_session.commit()

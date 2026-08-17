@@ -36,6 +36,13 @@ const NAV_SECTIONS = [
       { path: '#/settings', label: 'Settings',  iconKey: 'settings' },
     ],
   },
+  {
+    label: 'Management',
+    items: [
+      { path: '#/admin',        label: 'Admin',        iconKey: 'layers',  adminOnly: true },
+      { path: '#/master-admin', label: 'Master Admin', iconKey: 'zap',     masterOnly: true },
+    ],
+  },
 ];
 
 // ── DOM builder helpers ──────────────────────────────────────
@@ -122,12 +129,22 @@ export function createShell() {
   const nav = el('nav', { className: 'sidebar-nav' });
 
   const allNavItems = [];
+  const currentRole = authService.currentUser && authService.currentUser.role;
+
+  const canSeeItem = (item) => {
+    if (item.adminOnly) return currentRole === 'admin' || currentRole === 'master_admin';
+    if (item.masterOnly) return currentRole === 'master_admin';
+    return true;
+  };
 
   for (const section of NAV_SECTIONS) {
+    const visibleItems = section.items.filter(canSeeItem);
+    if (visibleItems.length === 0) continue;
+
     const sectionLabel = el('div', { className: 'nav-section-label' }, section.label);
     nav.appendChild(sectionLabel);
 
-    for (const item of section.items) {
+    for (const item of visibleItems) {
       const navItem = el('button', {
         className: 'nav-item',
         'data-path': item.path,
@@ -328,6 +345,8 @@ export function createShell() {
     '#/ai':        'AI Assistant',
     '#/profile':   'Profile',
     '#/settings':  'Settings',
+    '#/admin':     'Admin',
+    '#/master-admin': 'Master Admin',
   };
 
   function updateActiveNav(path) {

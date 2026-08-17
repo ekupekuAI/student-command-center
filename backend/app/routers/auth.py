@@ -21,6 +21,7 @@ from app.schemas.auth import (
     ProfileStats,
     ProfileUpdate,
     RegisterRequest,
+    RegisterResponse,
     UserRead,
 )
 from app.services import auth_service
@@ -33,17 +34,23 @@ _auth_guard = Depends(
 )
 
 
-@router.post("/register", response_model=AuthResponse, status_code=201)
+@router.post("/register", response_model=RegisterResponse, status_code=201)
 def register(
     payload: RegisterRequest,
     db: Session = Depends(get_db),
     _: None = _auth_guard,
-) -> AuthResponse:
+) -> RegisterResponse:
+    """Create a pending account. No token is issued — an admin must approve the
+    account before the user can sign in."""
     try:
         user = auth_service.register(db, payload.name, payload.email, payload.password)
     except auth_service.AuthServiceError as err:
         raise HTTPException(status_code=err.status_code, detail=err.message)
-    return AuthResponse(access_token=auth_service.issue_token(user), user=user)
+    return RegisterResponse(
+        user=user,
+        message="Your account has been created and is pending admin approval. "
+        "You will be able to sign in once an admin approves it.",
+    )
 
 
 @router.post("/login", response_model=AuthResponse)
@@ -55,6 +62,10 @@ def login(
     user = auth_service.authenticate(db, payload.email, payload.password)
     if user is None:
         raise HTTPException(status_code=401, detail="Invalid email or password")
+    if user.account_status != "approved":
+        raise HTTPException(
+            status_code=403, detail=auth_service.account_status_message(user.account_status)
+        )
     return AuthResponse(access_token=auth_service.issue_token(user), user=user)
 
 

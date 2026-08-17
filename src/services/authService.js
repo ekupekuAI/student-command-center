@@ -33,10 +33,10 @@ class AuthService {
     return initialsOf(this.currentUser && this.currentUser.name);
   }
 
+  /** Register a new account. Returns { user, message } — no session is created
+   *  because the account is pending admin approval and cannot log in yet. */
   async register({ name, email, password }) {
-    const data = await apiClient.post('/auth/register', { name, email, password });
-    this._acceptSession(data);
-    return data.user;
+    return apiClient.post('/auth/register', { name, email, password });
   }
 
   async login({ email, password }) {

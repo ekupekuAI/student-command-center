@@ -414,6 +414,50 @@
 
 .auth-switch:hover { text-decoration: underline; }
 
+/* ── Account pending approval status ───────────────────────── */
+.auth-status-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-2xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-3);
+  background: linear-gradient(135deg, var(--brand-500), var(--brand-700));
+  color: #fff;
+  box-shadow: var(--shadow-md);
+}
+
+.auth-status-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+}
+
+.auth-status-body p { margin: 0; }
+
+.auth-status-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  list-style: none;
+}
+
+.auth-status-list li {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.auth-status-list strong { color: var(--text-primary); }
+
 /* ── Help Center ───────────────────────────────────────────── */
 .auth-help {
   margin-top: var(--space-5);

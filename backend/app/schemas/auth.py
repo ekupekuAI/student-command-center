@@ -38,8 +38,18 @@ class UserRead(BaseModel):
     name: str
     email: EmailStr
     avatar_url: str | None
+    role: str
+    account_status: str
     created_at: datetime
     updated_at: datetime
+
+
+class RegisterResponse(BaseModel):
+    """Returned when a new account is created. No token is issued: the account
+    is pending and cannot log in until an admin approves it."""
+
+    user: UserRead
+    message: str
 
 
 class AuthResponse(BaseModel):
@@ -89,3 +99,28 @@ class ProfileStats(BaseModel):
     subjects_count: int
     notes_count: int
     joined_days: int
+
+
+class AdminUserUpdate(BaseModel):
+    """Admin-only partial update of another account (role/status/identity)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    email: EmailStr | None = None
+    role: Literal["user", "admin", "master_admin"] | None = None
+    account_status: Literal["pending", "approved", "rejected"] | None = None
+
+    @field_validator("name")
+    @classmethod
+    def strip_name(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("name must not be blank")
+        return stripped
+
+
+class AdminResetPasswordRequest(BaseModel):
+    new_password: str = Field(min_length=PASSWORD_MIN, max_length=128)

@@ -18,7 +18,12 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.database.session import get_db
-from app.models.user import User
+from app.models.user import (
+    ROLE_ADMIN,
+    ROLE_MASTER_ADMIN,
+    STATUS_APPROVED,
+    User,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +92,34 @@ def get_current_user(
     # Reject tokens issued before the user's current token_version (logout).
     if user is None or user.token_version != token_version:
         raise unauthorized
+    # Accounts that are not approved (pending/rejected) can never use an API
+    # token, even one that was issued earlier.
+    if user.account_status != STATUS_APPROVED:
+        raise unauthorized
     return user
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+def _require_role(user: User, *roles: str) -> User:
+    if user.role not in roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to perform this action.",
+        )
+    return user
+
+
+def require_admin(user: CurrentUser) -> User:
+    """Allow any admin or master admin through."""
+    return _require_role(user, ROLE_ADMIN, ROLE_MASTER_ADMIN)
+
+
+def require_master_admin(user: CurrentUser) -> User:
+    """Allow only the master admin through."""
+    return _require_role(user, ROLE_MASTER_ADMIN)
+
+
+AdminUser = Annotated[User, Depends(require_admin)]
+MasterAdminUser = Annotated[User, Depends(require_master_admin)]

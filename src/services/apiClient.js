@@ -58,10 +58,11 @@ export class ApiError extends Error {
 
 function friendlyMessage(status, payload) {
   // Backend may return a friendly string detail for these statuses
-  // (e.g. the AI assistant's availability errors on 429 / 5xx, or the
-  // generic "Invalid email or password" on failed logins).
+  // (e.g. the AI assistant's availability errors on 429 / 5xx, the generic
+  // "Invalid email or password" on failed logins, or the account-approval
+  // messages returned with 403 on the auth screen).
   const stringDetail = payload && typeof payload.detail === 'string' ? payload.detail : null;
-  if (stringDetail && (status === 400 || status === 401 || status === 404 || status === 409 || status === 429 || status >= 500)) {
+  if (stringDetail && (status === 400 || status === 401 || status === 403 || status === 404 || status === 409 || status === 429 || status >= 500)) {
     return stringDetail;
   }
   if (status === 422) {

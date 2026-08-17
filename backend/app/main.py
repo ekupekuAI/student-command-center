@@ -8,13 +8,27 @@ Production safeguards applied here:
   - Adds defensive security headers on every response.
   - CORS restricted to the configured origins (env var CORS_ORIGINS_RAW,
     with CORS_ORIGINS accepted as an alias).
+  - Seeds the master admin account at startup when ADMIN_EMAIL/ADMIN_PASSWORD
+    are configured (idempotent, never overwrites the admin's password).
 """
+
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers import activities, ai, auth, health, notes, study, subjects, tasks
+from app.routers import (
+    activities,
+    admin,
+    ai,
+    auth,
+    health,
+    notes,
+    study,
+    subjects,
+    tasks,
+)
 
 _PLACEHOLDER_JWT = "dev-only-secret-change-me"
 
@@ -38,6 +52,21 @@ async def _security_headers_middleware(request: Request, call_next):
     return response
 
 
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    """Seed the master admin account once at startup (no-op unless configured)."""
+    if settings.admin_email and settings.admin_password:
+        from app.database.session import SessionLocal
+        from app.services.auth_service import ensure_admin
+
+        db = SessionLocal()
+        try:
+            ensure_admin(db)
+        finally:
+            db.close()
+    yield
+
+
 def create_app() -> FastAPI:
     if settings.is_production and settings.jwt_secret == _PLACEHOLDER_JWT:
         raise RuntimeError(
@@ -48,6 +77,7 @@ def create_app() -> FastAPI:
     application = FastAPI(
         title=settings.app_name,
         version="1.0.0",
+        lifespan=_lifespan,
         docs_url=None if settings.is_production else "/docs",
         redoc_url=None if settings.is_production else "/redoc",
         openapi_url=None if settings.is_production else f"{settings.api_prefix}/openapi.json",
@@ -65,6 +95,7 @@ def create_app() -> FastAPI:
 
     application.include_router(health.router, prefix=settings.api_prefix)
     application.include_router(auth.router, prefix=settings.api_prefix)
+    application.include_router(admin.router, prefix=settings.api_prefix)
     application.include_router(subjects.router, prefix=settings.api_prefix)
     application.include_router(tasks.router, prefix=settings.api_prefix)
     application.include_router(notes.router, prefix=settings.api_prefix)
