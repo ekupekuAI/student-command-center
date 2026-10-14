@@ -229,7 +229,7 @@ function buildHelp() {
         <ol>
           <li>On this screen, tap <strong>Create one</strong> under the sign-in button.</li>
           <li>Enter your full name, your email address, and a password of 8 or more characters.</li>
-          <li>Tap <strong>Create Account</strong> — you'll be signed in automatically.</li>
+          <li>Tap <strong>Create Account</strong> — an admin approves it, then you can sign in.</li>
         </ol>
       </div>
       <div class="auth-help-section">

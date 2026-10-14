@@ -116,7 +116,7 @@ export function createShell() {
   setTheme(getTheme());
 
   const user = authService.currentUser || { name: 'Student', initials: 'SC', email: '' };
-  const userInitials = user.initials || 'SC';
+  const userInitials = authService.currentUser ? authService.initials : 'SC';
 
   const shell = el('div', { className: 'app-shell' });
   const overlay = el('div', { className: 'sidebar-overlay' });

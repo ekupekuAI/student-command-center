@@ -204,7 +204,6 @@ def set_role(
             status_code=400,
             detail="An admin cannot change their own role.",
         )
-    _guard_target(current_user, target)
     target.role = role
     db.commit()
     auth_service.log_admin_action(

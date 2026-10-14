@@ -120,10 +120,10 @@ setAuthSwitchHandler((currentMode) => {
 
 // Any 401 on a protected endpoint (expired / revoked token) returns here.
 window.addEventListener('scc:unauthorized', () => {
-  authService.logout().finally(mountAuth);
+  authService.logout().finally(() => mountAuth());
 });
 
 // Explicit "Sign out" from the shell.
-window.addEventListener('scc:signed-out', mountAuth);
+window.addEventListener('scc:signed-out', () => mountAuth());
 
 boot();

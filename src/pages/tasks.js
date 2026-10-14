@@ -151,7 +151,7 @@ export function TasksPage() {
           <!-- Subject filter -->
           <select class="filter-select" id="filterSubjectSelect" aria-label="Filter by subject">
             <option value="all" ${state.subjectId === 'all' ? 'selected' : ''}>All Subjects</option>
-            ${subjects.map(s => `
+            ${subjectService.getAllSubjects().map(s => `
               <option value="${s.id}" ${state.subjectId === s.id ? 'selected' : ''}>
                 ${s.code} · ${s.name}
               </option>
