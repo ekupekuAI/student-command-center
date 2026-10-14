@@ -14,6 +14,7 @@ import { sessionToApi, sessionToUi } from './mappers.js';
 import { subjectService } from './subjectService.js';
 import { activityService } from './activityService.js';
 import { showErrorToast } from './notify.js';
+import { localDateStr } from './dates.js';
 
 const SESSIONS_STORAGE_KEY = 'study_sessions';
 const SETTINGS_STORAGE_KEY = 'timer_settings';
@@ -208,7 +209,7 @@ class StudyService {
    */
   getStudyStats() {
     const sessions = this.getAllSessions().filter(s => s.completed && s.sessionType === SESSION_TYPES.FOCUS);
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = localDateStr();
 
     // Start of current week (Monday)
     const now = new Date();
@@ -227,7 +228,8 @@ class StudyService {
       const mins = s.durationMinutes || 0;
       totalMinutes += mins;
 
-      const dateStr = (s.completedAt || s.startedAt || '').slice(0, 10);
+      const stamp = s.completedAt || s.startedAt;
+      const dateStr = stamp ? localDateStr(new Date(stamp)) : '';
       if (dateStr) sessionDates.add(dateStr);
 
       if (dateStr === todayStr) {
@@ -248,7 +250,7 @@ class StudyService {
     let streak = 0;
     const checkDate = new Date();
     while (true) {
-      const ymd = checkDate.toISOString().slice(0, 10);
+      const ymd = localDateStr(checkDate);
       if (sessionDates.has(ymd)) {
         streak++;
         checkDate.setDate(checkDate.getDate() - 1);
@@ -256,7 +258,7 @@ class StudyService {
         // If today has no study session yet, check if yesterday had one to maintain streak
         if (streak === 0 && ymd === todayStr) {
           checkDate.setDate(checkDate.getDate() - 1);
-          const ymdYesterday = checkDate.toISOString().slice(0, 10);
+          const ymdYesterday = localDateStr(checkDate);
           if (sessionDates.has(ymdYesterday)) {
             streak++;
             checkDate.setDate(checkDate.getDate() - 1);
@@ -324,7 +326,10 @@ class TimerEngine {
 
   _initSubject() {
     const subjects = subjectService.getAllSubjects();
-    if (subjects.length > 0 && !this.selectedSubjectId) {
+    // Also reselect when the chosen subject was deleted (or belongs to a
+    // previous account) so the session POST isn't rejected.
+    const stillExists = subjects.some(s => s.id === this.selectedSubjectId);
+    if (subjects.length > 0 && !stillExists) {
       this.selectedSubjectId = subjects[0].id;
     }
   }

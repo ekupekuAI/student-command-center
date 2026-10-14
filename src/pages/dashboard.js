@@ -14,6 +14,7 @@ import { activityService } from '../services/activityService.js';
 import { openTaskModal } from '../components/taskModal.js';
 import { openNoteModal } from '../components/noteModal.js';
 import { showErrorToast } from '../services/notify.js';
+import { localDateStr, localDateOffset } from '../services/dates.js';
 
 export function DashboardPage() {
   const wrapper = document.createElement('div');
@@ -34,7 +35,7 @@ export function DashboardPage() {
 
   function taskDueStatus(due, isDone) {
     if (isDone) return { cls: 'ok', label: `Completed` };
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDateStr();
     if (due < today) return { cls: 'overdue', label: 'Overdue' };
     if (due === today) return { cls: 'soon', label: 'Due today' };
     return { cls: 'ok', label: `Due ${due}` };
@@ -287,8 +288,8 @@ export function DashboardPage() {
       `;
     }
 
-    const today = new Date().toISOString().slice(0, 10);
-    const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+    const today = localDateStr();
+    const tomorrow = localDateOffset(1);
 
     return `
       <ul style="list-style:none;padding:0;margin:0">

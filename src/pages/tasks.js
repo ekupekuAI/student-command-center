@@ -14,6 +14,7 @@ import {
 import { consumePendingSearch } from '../searchBridge.js';
 import { openTaskModal, showConfirmDialog } from '../components/taskModal.js';
 import { showErrorToast } from '../services/notify.js';
+import { localDateStr, localDateOffset } from '../services/dates.js';
 
 export function TasksPage() {
   const container = document.createElement('div');
@@ -33,7 +34,7 @@ export function TasksPage() {
     if (!dueDate) return { label: 'No date', cls: 'neutral' };
     if (isDone) return { label: `Due ${dueDate}`, cls: 'neutral' };
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDateStr();
     if (dueDate < today) {
       return { label: `Overdue (${dueDate})`, cls: 'error' };
     }
@@ -42,7 +43,7 @@ export function TasksPage() {
     }
 
     // Tomorrow check
-    const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+    const tomorrow = localDateOffset(1);
     if (dueDate === tomorrow) {
       return { label: 'Due tomorrow', cls: 'brand' };
     }
@@ -360,9 +361,7 @@ export function TasksPage() {
     container.querySelector('#createTaskBtn')?.addEventListener('click', () => {
       openTaskModal({
         task: null,
-        onSave: (newTaskData) => {
-          taskService.createTask(newTaskData);
-        },
+        onSave: (newTaskData) => taskService.createTask(newTaskData),
       });
     });
 
@@ -457,9 +456,7 @@ export function TasksPage() {
           if (task) {
             openTaskModal({
               task,
-              onSave: (updates) => {
-                taskService.updateTask(taskId, updates);
-              },
+              onSave: (updates) => taskService.updateTask(taskId, updates),
             });
           }
           return;

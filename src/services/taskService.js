@@ -13,6 +13,7 @@ import { apiClient } from './apiClient.js';
 import { storage } from './storage.js';
 import { taskToApi, taskToUi } from './mappers.js';
 import { activityService } from './activityService.js';
+import { localDateStr } from './dates.js';
 
 const STORAGE_KEY = 'tasks';
 
@@ -263,7 +264,7 @@ class TaskService {
   /** Calculate task statistics */
   getTaskStats() {
     const tasks = this.getAllTasks();
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDateStr();
 
     let total = tasks.length;
     let completed = 0;
@@ -302,7 +303,7 @@ class TaskService {
   /** Retrieve today's priority tasks and upcoming uncompleted tasks */
   getTodayAndUpcomingTasks(limit = 6) {
     const tasks = this.getAllTasks();
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDateStr();
 
     const overdueOrToday = [];
     const upcoming = [];
@@ -320,11 +321,11 @@ class TaskService {
 
     const priorityWeight = { high: 3, medium: 2, low: 1 };
     overdueOrToday.sort((a, b) => {
-      if (a.dueDate !== b.dueDate) return a.dueDate.localeCompare(b.dueDate);
+      if (a.dueDate !== b.dueDate) return (a.dueDate || '').localeCompare(b.dueDate || '');
       return priorityWeight[b.priority] - priorityWeight[a.priority];
     });
 
-    upcoming.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+    upcoming.sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
 
     return [...overdueOrToday, ...upcoming, ...completed].slice(0, limit);
   }

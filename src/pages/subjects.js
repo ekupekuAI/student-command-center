@@ -366,9 +366,7 @@ export function SubjectsPage() {
           if (subject) {
             openSubjectModal({
               subject,
-              onSave: (updates) => {
-                subjectService.updateSubject(subjectId, updates);
-              },
+              onSave: (updates) => subjectService.updateSubject(subjectId, updates),
             });
           }
           return;

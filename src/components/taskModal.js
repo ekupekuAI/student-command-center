@@ -7,6 +7,7 @@ import { icons } from '../icons.js';
 import { subjectService } from '../services/subjectService.js';
 import { PRIORITY_OPTIONS, STATUS_OPTIONS } from '../services/taskService.js';
 import { showErrorToast } from '../services/notify.js';
+import { localDateStr } from '../services/dates.js';
 
 /**
  * Open Create or Edit Task Modal
@@ -16,7 +17,7 @@ import { showErrorToast } from '../services/notify.js';
  */
 export function openTaskModal({ task = null, onSave }) {
   const isEdit = Boolean(task);
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = localDateStr();
   const availableSubjects = subjectService.getAllSubjects();
   const defaultSubjectId = availableSubjects.length > 0 ? availableSubjects[0].id : '';
 

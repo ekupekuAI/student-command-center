@@ -155,6 +155,8 @@ export function AIPage() {
     const message = (text ?? '').trim();
     if (!message || state.sending) return;
 
+    // Prior turns only: the backend appends `message` itself.
+    const history = currentHistory();
     state.messages.push({ role: 'user', content: message });
     state.error = null;
     state.sending = true;
@@ -163,7 +165,7 @@ export function AIPage() {
     try {
       const data = await apiClient.post(
         '/ai/chat',
-        { message, history: currentHistory() },
+        { message, history },
         { timeout: SEND_TIMEOUT_MS },
       );
       if (data && typeof data.message === 'string') {

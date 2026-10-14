@@ -12,6 +12,7 @@ import { noteService } from '../services/noteService.js';
 import { studyService } from '../services/studyService.js';
 import { activityService } from '../services/activityService.js';
 import { showToast } from '../services/notify.js';
+import { localDateStr } from '../services/dates.js';
 
 const THEMES = [
   { value: 'light', label: 'Light', icon: 'sun' },
@@ -39,7 +40,7 @@ function exportJson() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `command-center-export-${new Date().toISOString().slice(0, 10)}.json`;
+  link.download = `command-center-export-${localDateStr()}.json`;
   document.body.appendChild(link);
   link.click();
   link.remove();

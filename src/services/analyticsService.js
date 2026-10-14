@@ -8,6 +8,7 @@ import { taskService } from './taskService.js';
 import { subjectService } from './subjectService.js';
 import { studyService, SESSION_TYPES } from './studyService.js';
 import { noteService } from './noteService.js';
+import { localDateStr, parseLocalDate } from './dates.js';
 
 export const TIME_RANGES = {
   TODAY: 'today',
@@ -25,11 +26,11 @@ class AnalyticsService {
   isDateInRange(dateVal, range = TIME_RANGES.WEEK) {
     if (!dateVal || range === TIME_RANGES.ALL) return true;
 
-    const d = new Date(dateVal);
+    const d = parseLocalDate(dateVal);
     const now = new Date();
 
     if (range === TIME_RANGES.TODAY) {
-      return d.toISOString().slice(0, 10) === now.toISOString().slice(0, 10);
+      return localDateStr(d) === localDateStr(now);
     }
 
     if (range === TIME_RANGES.WEEK) {
@@ -133,7 +134,7 @@ class AnalyticsService {
     const inProgressTasks = tasksInRange.filter(t => !t.done && t.status === 'in_progress').length;
     const todoTasks = tasksInRange.filter(t => !t.done && t.status === 'todo').length;
 
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = localDateStr();
     const overdueTasks = tasksInRange.filter(t => !t.done && t.dueDate < todayStr).length;
     const taskCompletionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
